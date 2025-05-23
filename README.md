@@ -68,7 +68,7 @@ For testing and debugging mobile input and gameplay during development, I first 
 
 This video should explain the process:
 
-![How to setup Unity Remote 5](https://www.youtube.com/watch?v=L-48i5VclSc)
+[![How to setup Unity Remote 5](https://www.youtube.com/watch?v=L-48i5VclSc)]
 
 But otherwise the exact requirements would be:
 
@@ -106,16 +106,52 @@ This and the fact that batch does not include loop breaks or threading and GOTOs
 
 The script logic goes as follows:
 
-- The script first uses` adb devices` to list all connected devices (USB).
+- The script first uses `adb devices` to list all connected devices (USB).
 - Loops through each found serial number.
 - Runs connect/install/launch commands on specified targets.
 - Disconnects all previous connections for cleanup.
 
 ### GPS and Camera Permissions
 
+For the counter that is stopped when the player is moving, GPS is necessary, which is accessible using Unity's Location Services, for which the (Old) Input system already provides a variable of `Input.location`.
+
+[Unity Documentation - LocationService](https://docs.unity3d.com/6000.1/Documentation/ScriptReference/LocationService.html)
+
+Even then the Input.location variable needed to be set up and for that I had to search how to correctly use it, as some features ike permissions vary between devices.
+
+Even with this variable, setup is required, which can vary significantly between devices and platforms. I referenced this Medium article to correctly initialize GPS at start, using coroutines:
+
+[Medium - How to Access GPS Location in Unity](https://nosuchstudio.medium.com/how-to-access-gps-location-in-unity-521f1371a7e3)
+
+Location Services operate asynchronously, so it’s important to run them in parallel with the main thread, and to update the GPS status whenever the player changes permissions.
+
+During testing on different devices, I noticed inconsistencies with GPS activation and considered creating a custom Android Manifest before building, to make sure permissions were required at before even launching. However, while it is possible to achieve this by placing the manifest in the correct folder hierarchy and setting it up to match build preferences, managing the manifest file can be complex and may cause the app to become uninstallable on some devices as I learned, because of the dynamic nature of Unity builds (that build the Manifest according to script necessities), led me to prefer runtime permission requests for now.
+
+[Android App Manifest Documentation](https://docs.unity3d.com/Manual//android-manifest.html)
+
+On Android it's supposed to request location permission on app launch, and wait until it is granted to add the stop timer feature.
+
+If enabled, the game then periodically checks for GPS movement by comparing longitude and latitude of the GPS last placements, stopping the timer if there is a significant delta.
+
+Though this location may not always be correctly reflected by the phone, and may cause jitters that falsy affect this delta, so for this we would need to test different values of Accuracy In Meters and Distance In Meters inserted at `Input.location.Start(x, y)` for better accuracy.
+
+The .bat file for build was very helpful in testing GPS, as when testing with Unity Remote, the device does stream GPS, but the Editor’s own permissions can cause `Input.location.isEnabledByUser` to return false even when location is enabled on the host device.
+
+[Stack Overflow - Input.LocationService.isEnabledByUser returning false with Unity Remote in the Editor](https://stackoverflow.com/questions/45340418/input-locationservice-isenabledbyuser-returning-false-with-unity-remote-in-the-e)
+
+For that reason we must build on android and to make sure permissions for location are requested and enabled.
+
 ### Conclusions
 
 Wa
+
+https://discussions.unity.com/t/how-do-i-make-locationservice-start-work/153995
+
+https://docs.unity3d.com/Manual/UnityRemote5.html
+https://stackoverflow.com/questions/15800303/pausing-an-assembly-program
+https://developer.android.com/tools/adb
+https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.html
+https://docs.unity3d.com/Manual//android-manifest.html
 
 ### **Bibliography**
 
