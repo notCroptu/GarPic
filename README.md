@@ -42,7 +42,7 @@ To capture them is the simpler part, as we can use Unity's WebCamTexture to ask 
 
 Using WebGL was also considered, as it would people to play without requiring them to install anything, and while it would still need permission to access camera and gallery, it could potentially run on more platforms and devices.
 
-However, capturing or selecting photos in a browser would require custom JavaScript to access the camera or gallery and convert the result into PNGs that could be uploaded using `UnityWebRequest`, and `UnityNetcode` for GameObjects cannot be used in `WebGL` builds, so multiplayer communication would need to rely on `WebSocket` (Unity plugin).
+However, capturing or selecting photos in a browser would require custom JavaScript to access the camera or gallery and convert the result into PNGs that could be uploaded using `UnityWebRequest`, and `UnityNetcode` for GameObjects cannot be used in `WebGL` builds, so multiplayer communication would need to rely on `WebSocket (Unity plugin).
 
 [WebSocket Unity Plugin](https://github.com/endel/NativeWebSocket)
 
@@ -68,7 +68,7 @@ For testing and debugging mobile input and gameplay during development, I first 
 
 This video should explain the process:
 
-[![How to setup Unity Remote 5](https://www.youtube.com/watch?v=L-48i5VclSc)]
+[![How to setup Unity Remote 5](https://img.youtube.com/vi/L-48i5VclSc/0.jpg)](https://www.youtube.com/watch?v=L-48i5VclSc)
 
 But otherwise the exact requirements would be:
 
@@ -111,9 +111,9 @@ The script logic goes as follows:
 - Runs connect/install/launch commands on specified targets.
 - Disconnects all previous connections for cleanup.
 
-### GPS and Camera Permissions
+### Permissions
 
-For the counter that is stopped when the player is moving, GPS is necessary, which is accessible using Unity's Location Services, for which the (Old) Input system already provides a variable of `Input.location`.
+An example oif permissions necessary for the project would be the counter that is stopped when the player is moving, for which we need GPS, which is accessible using Unity's Location Services, for which the (Old) Input system already provides a variable of `Input.location`.
 
 [Unity Documentation - LocationService](https://docs.unity3d.com/6000.1/Documentation/ScriptReference/LocationService.html)
 
@@ -135,11 +135,35 @@ If enabled, the game then periodically checks for GPS movement by comparing long
 
 Though this location may not always be correctly reflected by the phone, and may cause jitters that falsy affect this delta, so for this we would need to test different values of Accuracy In Meters and Distance In Meters inserted at `Input.location.Start(x, y)` for better accuracy.
 
-The .bat file for build was very helpful in testing GPS, as when testing with Unity Remote, the device does stream GPS, but the Editor’s own permissions can cause `Input.location.isEnabledByUser` to return false even when location is enabled on the host device.
+The .bat file for build was very helpful in testing the previous process, as when testing with Unity Remote, the device does stream GPS, but the Editor’s own permissions can cause `Input.location.isEnabledByUser` to return false even when location is enabled on the host device.
 
 [Stack Overflow - Input.LocationService.isEnabledByUser returning false with Unity Remote in the Editor](https://stackoverflow.com/questions/45340418/input-locationservice-isenabledbyuser-returning-false-with-unity-remote-in-the-e)
 
-For that reason we must build on android and to make sure permissions for location are requested and enabled.
+For that reason we must build on android and to make sure permissions for location and camera are enabled.
+
+### UnityWebRequest
+
+Unity Web Request proved to be useful for more than sending camera data, as I wanted players to get unexpected words rather than ones I preset from my own list so I explored using online APIs for which I found UnityWebRequest to be useful.
+
+#### Random Word API
+
+My first attempt used [Random Word API](https://random-word-api.herokuapp.com/word), as it was very simple to integrate and returned a new word every time. However, the words were often too technical, too weird even for the unexpectedness I was hoping for, and worried it would end up messing up the experience (like rare scientific names).
+
+So looking for more control, I discovered the [Datamuse API](https://www.datamuse.com/api/), which lets you specify restrictions in the URL so you can even find words that fit certain meaning, spelling, sound, vocabulary and even theme. This also opened up the possibility to later let me give players the liberty to choose their own theme to bias word selection towards what they were feeling like.
+
+To integrate this into Unity, more specifically in the `WordSelection` script, I first created a list of topics, that would be search using the APIs `topics` query, though I later learned not all words in this query yield results, and had to move to a more stable query, though less appropriate `rel_jja`, that searches words relating to a given noun, essentially it results in more descriptive words based on that noun, instead of directly relating to a given topic.
+
+> **Note:** This might not have been a good API to use later on, as it has a maximum of 100,000 requests per day. (For example, with an average of 8 rounds per session and approximately 80,000 sessions per day (based on Gartic statistics during the pandemic), you could need up to 640,000 requests per day, plus, multiple requests might be needed per round if Word Selection fails.)
+
+#### Data Retrieval
+
+With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).html.
+
+Basically, you create a new `UnityWebRequest`, input a source URL from which it will get data (`UnityWebRequest www = UnityWebRequest.Get("url"`) and wait for it to return a result inside a coroutine, where upon completion you can check for success and choose to try again.
+
+The coroutine part worked well with my setup as I had already decided to have a Game Loop based on coroutines. (is this good for networking,? lol ? maybe not idk)
+
+If successful, the `UnityWebRequest` handler will contain any data retrieved from the webpage (in my case, only the text, which is JSON as most word APIs return), and I then only needed to parse the returned JSON response to extract the first word.
 
 ### Conclusions
 
