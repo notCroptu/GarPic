@@ -139,7 +139,11 @@ The .bat file for build was very helpful in testing the previous process, as whe
 
 [Stack Overflow - Input.LocationService.isEnabledByUser returning false with Unity Remote in the Editor](https://stackoverflow.com/questions/45340418/input-locationservice-isenabledbyuser-returning-false-with-unity-remote-in-the-e)
 
-For that reason we must build on android and to make sure permissions for location and camera are enabled.
+For that reason we must build on android and to make sure permissions for location are enabled.
+
+Although it is also necessary to ask for permissions for the Camera, as both GPS and Camera permissions are considered dangerous, it is a lot less hazardous as you don't need to verify any camera services, so the only thing we must do is call `Application.RequestUserAuthorization` at runtime. The documentation came with the correct implementation but I chose follow the one I already had:
+
+[Unity Documentation - WebCamTexture](https://docs.unity3d.com/ScriptReference/WebCamTexture.html)
 
 ### UnityWebRequest
 
@@ -157,13 +161,29 @@ To integrate this into Unity, more specifically in the `WordSelection` script, I
 
 #### Data Retrieval
 
-With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).html.
+With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the *OLD* official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).html.
 
 Basically, you create a new `UnityWebRequest`, input a source URL from which it will get data (`UnityWebRequest www = UnityWebRequest.Get("url"`) and wait for it to return a result inside a coroutine, where upon completion you can check for success and choose to try again.
 
 The coroutine part worked well with my setup as I had already decided to have a Game Loop based on coroutines. (is this good for networking,? lol ? maybe not idk)
 
 If successful, the `UnityWebRequest` handler will contain any data retrieved from the webpage (in my case, only the text, which is JSON as most word APIs return), and I then only needed to parse the returned JSON response to extract the first word.
+
+#### Data Sending
+
+For camera implementation with `UnityWebRequest`, I needed my own database solution for storing images. I chose Supabase, recommended by a friend for being more affordable , performant, and for offering authentication support.
+
+The implementation for sending images using `UnityWebRequest` was similar to sending packets in retrieving json data, but this time I had to choose between HTTP `PUT` and `POST` for uploading. I chose `PUT` because it is used to upload or replace a resource at a specific path and if the file does not exist, it creates a new one, and if it already exists, it overwrites it. `POST` is used for creating a new resource without specifying the path, which was not ideal for storing session and player specific data by their IDs.
+
+[Supabase - http: RESTful Client](https://supabase.com/docs/guides/database/extensions/http)
+
+When setting up Supabase, I created a storage bucket and was provided with the bucket URL, an anonymous key, and the bucket name, which are necessary to authenticate upload requests from the Unity client to Supabase storage.
+
+The variables I created (`supabaseURL`, `supabaseANON`, `supabaseBUCKET`) are intended for the use of the client specifically, as connecting the client to the database (with a *connection string*) would compromise the database's security as it would give players my database credentials such as the password.
+
+This doesn't mean it will take more work later as I only need clients to be aware of the correct URL for uploads and downloads and use `UnityWebRequest` both for sending images and retrieving them later, so I don't need to have my own backend for this structure and therefore no need to use *connection strings*.
+
+The client credentials however had to be put away in a json, hidden by GitIgnore in order to keep the project safe in the git. Therefore Supabase would only work in my own PC or builds I make.
 
 ### Conclusions
 

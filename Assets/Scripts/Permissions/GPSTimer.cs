@@ -20,10 +20,10 @@ public class GPSTimer : MonoBehaviour
 
         #elif UNITY_ANDROID
 
-        if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.CoarseLocation))
+        if (!Permission.HasUserAuthorizedPermission(Permission.CoarseLocation))
         {
             _text.text = "Requesting access";
-            UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.CoarseLocation);
+            Permission.RequestUserPermission(Permission.CoarseLocation);
         }
 
         // First, check if user has location service enabled
@@ -33,7 +33,7 @@ public class GPSTimer : MonoBehaviour
         }
 
         yield return new WaitUntil( () => Input.location.isEnabledByUser &&
-            UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.CoarseLocation)); 
+            Permission.HasUserAuthorizedPermission(Permission.CoarseLocation)); 
 
         _text.text = "";
         
@@ -82,7 +82,7 @@ public class GPSTimer : MonoBehaviour
         StartCoroutine( StartCount() );
     }
 
-    private IEnumerator StartCount()
+    public IEnumerator StartCount()
     {
         Debug.Log("Moving Starting Count. ");
 
@@ -104,8 +104,6 @@ public class GPSTimer : MonoBehaviour
 
             _text.text = _runTime.ToString();
         }
-        
-        // warn somewhere that its done
     }
 
     private LocationInfo? _lastLocation;

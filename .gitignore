@@ -2,7 +2,6 @@
 **/[Tt]emp/
 **/[Oo]bj/
 **/[Bb]uild/
-**/[Bb]uilds/
 **/[Ll]ogs/
 **/[Uu]ser[Ss]ettings/
 
@@ -56,6 +55,7 @@ sysinfo.txt
 *.apk
 *.unitypackage
 *.aab
+GarPic_BurstDebugInformation_DoNotShip
 
 # Crashlytics generated file
 crashlytics-build.properties
@@ -69,3 +69,6 @@ crashlytics-build.properties
 
 # TextMesh Pro files
 **/[Aa]ssets/TextMesh*Pro*
+
+
+SBkeys.json
