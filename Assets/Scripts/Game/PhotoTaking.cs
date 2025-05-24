@@ -14,6 +14,7 @@ public class PhotoTaking : GameState
 
     private int _photoNum = 0;
     private byte[] _imageBytes;
+    private Texture2D _photo;
 
     private IEnumerator DelayedCameraInitialization()
     {
@@ -30,19 +31,20 @@ public class PhotoTaking : GameState
         yield return new WaitUntil( () => UnityEditor.EditorApplication.isRemoteConnected );
 
         #elif UNITY_ANDROID
-        if (!Permission.HasUserAuthorizedPermission(Permission.Camera))
+        if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera))
         {
-            Permission.RequestUserPermission(Permission.Camera);
+            UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.Camera);
         }
 
         yield return new WaitUntil( () =>
-            Permission.HasUserAuthorizedPermission(Permission.Camera)); 
+            UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.Camera)); 
         #endif
     }
 
     private void InitializeCamera()
     {
         _webcamTexture = new WebCamTexture();
+        _display.color = Color.white;
         _display.texture = _webcamTexture;
         _webcamTexture.Play();
     }
@@ -61,20 +63,25 @@ public class PhotoTaking : GameState
         if ( _webcamTexture == null || !_webcamTexture.isPlaying )
             return;
 
-        Texture2D photo = new Texture2D(_webcamTexture.width, _webcamTexture.height);
-        photo.SetPixels32(_webcamTexture.GetPixels32());
-        photo.Apply();
-        _imageBytes = photo.EncodeToPNG();
+        _photo = new Texture2D(_webcamTexture.width, _webcamTexture.height);
+        _photo.SetPixels32(_webcamTexture.GetPixels32());
+        _photo.Apply();
+        _imageBytes = _photo.EncodeToPNG();
     }
 
     public override IEnumerator State()
     {
         _canvas.SetActive(true);
+        _takePhoto.gameObject.SetActive(true);
 
         yield return DelayedCameraInitialization();
 
         // wait until count is done
         yield return _timer.StartCount();
+
+        _takePhoto.gameObject.SetActive(false);
+        _webcamTexture.Stop();
+        _display.texture = _photo;
 
         yield return UploadPhoto();
         

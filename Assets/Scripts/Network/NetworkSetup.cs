@@ -160,7 +160,7 @@ public class NetworkSetup : MonoBehaviour
           .Where(s => s.enabled)
           .Select(s => s.path)
           .ToArray();
-        buildPlayerOptions.locationPathName = Path.Combine("Builds", "GarPic.exe");
+        buildPlayerOptions.locationPathName = Path.Combine("Builds", "GarPic.apk");
         buildPlayerOptions.target = BuildTarget.Android;
         buildPlayerOptions.options = BuildOptions.None;
         // Perform the build

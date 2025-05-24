@@ -8,7 +8,7 @@ public class GameLoop : MonoBehaviour
 
     private void Start()
     {
-        _gameRounds = 1;
+        _gameRounds = 8;
         StartCoroutine(GameLoopCoroutine());
     }
 

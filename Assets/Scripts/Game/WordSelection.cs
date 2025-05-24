@@ -6,8 +6,8 @@ using UnityEngine.Networking;
 public class WordSelection : GameState
 {
     [field:SerializeField] public string Word { get; private set; }
-    private TMP_Text _word;
-    private GameObject _canvas;
+    [SerializeField] private TMP_Text _word;
+    [SerializeField] private GameObject _canvas;
 
     private string[] _topics = { "object", "emotion", "scene", "action", "place", "animal" };
 
