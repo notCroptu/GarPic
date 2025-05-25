@@ -305,6 +305,7 @@ MonoBehaviour:
   _states:
   - {fileID: 112257435}
   - {fileID: 112257439}
+  Round: 0
 --- !u!4 &112257437
 Transform:
   m_ObjectHideFlags: 0
@@ -332,7 +333,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 443985ed62234294c97fd1abb1a40855, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _baseRunTime: 20
+  _baseRunTime: 2
   _text: {fileID: 1498835876}
 --- !u!114 &112257439
 MonoBehaviour:
@@ -346,10 +347,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5895b182e71dd0479d41bdf26486f1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _gameloop: {fileID: 112257436}
   _display: {fileID: 1507199952}
   _takePhoto: {fileID: 1225180859}
   _canvas: {fileID: 1786344872}
   _timer: {fileID: 112257438}
+  _nullTexture: {fileID: 2800000, guid: f08672ff521b92541b8001beac4518de, type: 3}
 --- !u!1 &142513208
 GameObject:
   m_ObjectHideFlags: 0

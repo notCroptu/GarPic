@@ -166,7 +166,7 @@ With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse ur
 
 Basically, you create a new `UnityWebRequest`, input a source URL from which it will get data (`UnityWebRequest www = UnityWebRequest.Get("url"`) and wait for it to return a result inside a coroutine, where upon completion you can check for success and choose to try again.
 
-The coroutine part worked well with my setup as I had already decided to have a Game Loop based on coroutines. (is this good for networking,? lol ? maybe not idk)
+The coroutine part worked well with my setup as I had already decided to have a Game Loop based on coroutines.
 
 If successful, the `UnityWebRequest` handler will contain any data retrieved from the webpage (in my case, only the text, which is JSON as most word APIs return), and I then only needed to parse the returned JSON response to extract the first word.
 
@@ -182,9 +182,35 @@ When setting up Supabase, I created a storage bucket and was provided with the b
 
 The variables I created (`supabaseURL`, `supabaseANON`, `supabaseBUCKET`) are intended for the use of the client specifically, as connecting the client to the database (with a *connection string*) would compromise the database's security as it would give players my database credentials such as the password.
 
+For `UnityWebRequest` to be able to handle the images through the clients without needing a deeper user authentication, I had to include policies to my Supabase bucket to allow anonymous access with the keys above for insert (upload) and select (read) operations in the bucket only.
+
 This doesn't mean it will take more work later as I only need clients to be aware of the correct URL for uploads and downloads and use `UnityWebRequest` both for sending images and retrieving them later, so I don't need to have my own backend for this structure and therefore no need to use *connection strings*.
 
 The client credentials however had to be put away in a json, hidden by GitIgnore in order to keep the project safe in the git. Therefore Supabase would only work in my own PC or builds I make.
+
+### Netcode for GameObjects
+
+### Server Relay
+
+To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using UnityNetcode for GameObjects learned through the implementation taught in class:
+
+https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG
+
+Relay servers, means that rather than hosting game worlds themselves, relay servers only provide the connections between players, which means they can serve many sessions at once, some relay servers like Steam's and PSN provide methods of authentication but we will only need anonymous users.
+
+This approach came from the setup simplicity for players, a simple UI and private sessions for friends that are easily manageable with short codes using Cloud.Unity relay.
+
+#### Goals
+
+On opening the app, players would be met with a join button, to join existing available sessions through a code, or a host button to create a new session. Sessions would have a max of 8 players, but players would be allowed to join at any time, keeping in mind the game would not be prolonged for their benefit.
+
+When starting the game, players can either host a new session (generating a unique code) or join an existing session using a code shared by the host, sessions should handle up to 8 players and are open for joining until the game ends, but new players will join the ongoing game rather than restarting it for everyone.
+
+#### Implementation
+
+Firstly, I had to add the Relay service provided by Unity to the project through Unity Dashboard, which was easy, and the project was already registered in my account there.
+
+Then, on editor I turned on Relay on Unity Transport and used the NetworkSetup script to check
 
 ### Conclusions
 

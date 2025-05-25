@@ -12,6 +12,7 @@ public class PhotoTaking : GameState
     [SerializeField] private GameObject _canvas;
     [SerializeField] private GPSTimer _timer;
     private WebCamTexture _webcamTexture;
+    [SerializeField] private Texture2D _nullTexture;
 
     private byte[] _imageBytes;
     private Texture2D _photo;
@@ -87,36 +88,60 @@ public class PhotoTaking : GameState
         
         _canvas.SetActive(false);
         _imageBytes = null;
+        _photo = null;
     }
 
     public IEnumerator UploadPhoto()
     {
         if ( LoadSupabaseConfig.Config == null )
         {
-            Debug.LogError("PhotoTaking supabase config file not found. ");
+            Debug.Log("PhotoTaking supabase config file not found. ");
             yield break;
         }
 
         if (_imageBytes == null)
         {
-            Debug.LogError("PhotoTaking no photo to upload!");
+            Debug.Log("PhotoTaking no photo to upload!");
+            #if UNITY_EDITOR
+            _imageBytes = _nullTexture.EncodeToPNG();
+            #elif UNITY_ANDROID
             yield break;
+            #endif
         }
 
         string fileName = $"{NetworkManager.ServerClientId}/{NetworkManager.Singleton.LocalClientId}/photo_{_gameloop.Round}.png";
         string url = $"{LoadSupabaseConfig.Config.supabaseURL}/storage/v1/object/{LoadSupabaseConfig.Config.supabaseBUCKET}/{fileName}";
-        // TODO: add client id and session to file hiererchy name for id
 
-        UnityWebRequest www = UnityWebRequest.Put(url, _imageBytes);
-        www.SetRequestHeader("apikey", LoadSupabaseConfig.Config.supabaseANON);
-        www.SetRequestHeader("Authorization", $"Bearer {LoadSupabaseConfig.Config.supabaseANON}");
-        www.SetRequestHeader("Content-Type", "image/png");
+        Debug.Log("PhotoTaking url: "  + url);
 
-        do
+        int maxTries = 3;
+        int attempt = 0;
+        bool success = false;
+
+        while ( attempt < maxTries && !success )
         {
-            Debug.Log("PhotoTaking-ing. ");
-            yield return www.SendWebRequest();
-        } while (www.result != UnityWebRequest.Result.Success);
+            using (UnityWebRequest www = UnityWebRequest.Put(url, _imageBytes))
+            {
+                www.SetRequestHeader("apikey", LoadSupabaseConfig.Config.supabaseANON);
+                www.SetRequestHeader("Authorization", $"Bearer {LoadSupabaseConfig.Config.supabaseANON}");
+                www.SetRequestHeader("Content-Type", "image/png");
+
+                Debug.Log($"PhotoTaking attempt {attempt + 1}");
+
+                yield return www.SendWebRequest();
+
+                if (www.result == UnityWebRequest.Result.Success)
+                {
+                    success = true;
+                    Debug.Log("done PhotoTaking");
+                }
+                else
+                {
+                    Debug.LogWarning("Photo upload failed: " + www.error);
+                }
+            }
+            attempt++;
+        }
 
         Debug.Log("done PhotoTaking");
     }
