@@ -5,6 +5,7 @@ public class GameLoop : MonoBehaviour
 {
     [SerializeField] private GameState[] _states;
     private int _gameRounds;
+    public int Round;
 
     private void Start()
     {
@@ -14,8 +15,9 @@ public class GameLoop : MonoBehaviour
 
     private IEnumerator GameLoopCoroutine()
     {
-        for ( int i = 0 ; i < _gameRounds ; i++ )
+        for ( int i = 1 ; i <= _gameRounds ; i++ )
         {
+            Round = i;
             foreach (GameState state in _states)
             {
                 yield return state.State();

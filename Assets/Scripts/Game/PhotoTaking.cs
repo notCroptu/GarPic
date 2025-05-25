@@ -6,13 +6,13 @@ using UnityEngine.UI;
 
 public class PhotoTaking : GameState
 {
+    [SerializeField] private GameLoop _gameloop;
     [SerializeField] private RawImage _display;
     [SerializeField] private Button _takePhoto;
     [SerializeField] private GameObject _canvas;
     [SerializeField] private GPSTimer _timer;
     private WebCamTexture _webcamTexture;
 
-    private int _photoNum = 0;
     private byte[] _imageBytes;
     private Texture2D _photo;
 
@@ -103,8 +103,7 @@ public class PhotoTaking : GameState
             yield break;
         }
 
-        _photoNum++;
-        string fileName = $"{NetworkManager.ServerClientId}/{NetworkManager.Singleton.LocalClientId}/photo{_photoNum}.png";
+        string fileName = $"{NetworkManager.ServerClientId}/{NetworkManager.Singleton.LocalClientId}/photo_{_gameloop.Round}.png";
         string url = $"{LoadSupabaseConfig.Config.supabaseURL}/storage/v1/object/{LoadSupabaseConfig.Config.supabaseBUCKET}/{fileName}";
         // TODO: add client id and session to file hiererchy name for id
 
