@@ -78,7 +78,8 @@ But otherwise the exact requirements would be:
     - Go to *Settings > About phone* and tap the Build number seven times ( also MIUI number or OS number)
   - **USB Debugging** enabled:
     - Go to *Settings > System > Developer options* and enable *USB debugging*
-  - USB cable capable of data transfer
+  - **USB Data Transfer** enabled:
+    - USB cable capable of data transfer
   - These **Unity Modules**:
     - Android Build Support
     - Android SDK & NDK Tools

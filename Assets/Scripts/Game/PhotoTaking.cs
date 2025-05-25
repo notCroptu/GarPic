@@ -91,15 +91,15 @@ public class PhotoTaking : GameState
 
     public IEnumerator UploadPhoto()
     {
-        if (_imageBytes == null)
+        if ( LoadSupabaseConfig.Config == null )
         {
-            Debug.LogError("PhotoTaking no photo to upload!");
+            Debug.LogError("PhotoTaking supabase config file not found. ");
             yield break;
         }
 
-        if ( LoadSupabaseConfig.Config == null )
+        if (_imageBytes == null)
         {
-            Debug.LogError("Supabase config file not found. ");
+            Debug.LogError("PhotoTaking no photo to upload!");
             yield break;
         }
 

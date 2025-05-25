@@ -7,7 +7,7 @@ public class LoadSupabaseConfig : MonoBehaviour
 
     private void Awake()
     {
-        string path = Path.Combine(Application.dataPath, "../SBkeys.json");
+        string path = Path.Combine(Application.dataPath, "Scripts/Permissions/SBkeys.json");
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);

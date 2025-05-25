@@ -13,7 +13,7 @@ public class WordSelection : GameState
 
     public override IEnumerator State()
     {
-        _canvas.SetActive(true);
+        // _canvas.SetActive(true);
 
         Debug.Log("starting WordSelection. ");
 
@@ -38,6 +38,6 @@ public class WordSelection : GameState
 
         Debug.Log("done WordSelection: " + www.downloadHandler.text + " to word: " + Word);
 
-        _canvas.SetActive(false);
+        // _canvas.SetActive(false);
     }
 }
