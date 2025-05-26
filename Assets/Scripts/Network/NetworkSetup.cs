@@ -62,6 +62,10 @@ public class NetworkSetup : MonoBehaviour
             }
         }
 
+        #if UNITY_EDITOR
+        IsServer = true;
+        #endif
+
         if ( _transport == null )
             _transport = GetComponent<UnityTransport>();
 
