@@ -112,6 +112,14 @@ The script logic goes as follows:
 - Runs connect/install/launch commands on specified targets.
 - Disconnects all previous connections for cleanup.
 
+To debug builds on mobile, I just needed to once again use adb to start a `logcat` while the phone is connected with udb debugging like described here:
+
+[Unity Discussions - How to use adb logcat?](https://discussions.unity.com/t/how-to-use-adb-logcat/75785/2)
+
+The command for cmd would look like this:
+
+`"C:\Program Files\Unity\Hub\Editor\6000.0.30f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" logcat -s Unity`
+
 ### Permissions
 
 An example oif permissions necessary for the project would be the counter that is stopped when the player is moving, for which we need GPS, which is accessible using Unity's Location Services, for which the (Old) Input system already provides a variable of `Input.location`.
@@ -192,7 +200,7 @@ The client credentials however had to be put away in a json, hidden by GitIgnore
 
 ### Server Relay
 
-To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using UnityNetcode for GameObjects learned through the implementation taught in class:
+To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
 https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG
 
@@ -210,11 +218,17 @@ When starting the game, players can either host a new session (generating a uniq
 
 Firstly, I had to add the Relay service provided by Unity to the project through Unity Dashboard, which was easy, and the project was already registered in my account there.
 
-Then, on editor I turned on Relay on Unity Transport and used the NetworkSetup script to check
+Then, on editor I turned on Relay on `UnityTransport` and used the `NetworkSetup` script to save transport information such as if the client is server, and if it is hosted as relay, and what the session number is, which will be helpful for identifying photos in Supabase.
+
+Relay setup needs to be async, contrary to usual network workings, and had to be checked through a Task called Login, where an exception is run in case the Unity authentication services are not able to initialize and sign in.
+
+Then another Task, `CreateAllocationData`, calls the service again to create the session connection, which I can then ask for session information, like the session code.
 
 ### Conclusions
 
 Wa
+
+https://discussions.unity.com/t/how-to-refer-to-internal-json-file-on-android/222832
 
 https://discussions.unity.com/t/how-do-i-make-locationservice-start-work/153995
 

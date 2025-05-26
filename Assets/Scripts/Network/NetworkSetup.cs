@@ -36,16 +36,18 @@ public class NetworkSetup : MonoBehaviour
     [SerializeField] private int _maxPlayers;
     public bool IsRelay { get; private set; } = false;
     public bool IsServer  { get; private set; } = false;
-    private string _session;
-    public string Session
+    private string _sessionCode;
+    public string SessionCode
     {
-        get { return _session; }
+        get { return _sessionCode; }
         set {
-            _session = value;
-            OnSetSession.Invoke();
+            _sessionCode = value;
+            OnSetSession.Invoke(_sessionCode);
         }
     }
-    public Action OnSetSession;
+    public Action<string> OnSetSession;
+
+    private RelayHostData _relayData;
 
     void Start()
     {
@@ -98,6 +100,53 @@ public class NetworkSetup : MonoBehaviour
                 yield break;
             }
 
+            // create allocation here
+
+            Task<Allocation> allocationTask = CreateAllocationData();
+
+            yield return new WaitUntil(() => allocationTask.IsCompleted);
+
+            if ( allocationTask.Exception != null )
+            {
+                UnityEngine.Debug.Log("Allocation failed: " + allocationTask.Exception);
+                yield break;
+            }
+            else
+            {
+                UnityEngine.Debug.Log("Allocation successful");
+                Allocation allocation = allocationTask.Result;
+
+                _relayData = new RelayHostData();
+
+                // Find the first endpoint
+                foreach( var endpoint in allocation.ServerEndpoints )
+                {
+                    _relayData.IPv4Address = endpoint.Host;
+                    _relayData.Port = (ushort) endpoint.Port;
+                    break;
+                }
+                _relayData.AllocationID = allocation.AllocationId;
+                _relayData.AllocationIDBytes = allocation.AllocationIdBytes;
+                _relayData.ConnectionData = allocation.ConnectionData;
+                _relayData.Key = allocation.Key;
+
+                var joinCodeTask = GetJoinCodeAsync(_relayData.AllocationID);
+
+                yield return new WaitUntil( () => joinCodeTask.IsCompleted );
+
+                if ( joinCodeTask.Exception != null )
+                {
+                    UnityEngine.Debug.Log("Join code failed: " + joinCodeTask.Exception);
+                    yield break;
+                }
+                else
+                {
+                    UnityEngine.Debug.Log("Code retrieved. ");
+                    _relayData.JoinCode = joinCodeTask.Result;
+                    SessionCode = _relayData.JoinCode;
+                }
+            }
+
             UnityEngine.Debug.Log("Login successful. ");
         }
     }
@@ -119,6 +168,18 @@ public class NetworkSetup : MonoBehaviour
         return true;
     }
 
+    public class RelayHostData
+    {
+        public string JoinCode;
+        public string IPv4Address;
+        public ushort Port;
+        public Guid AllocationID;
+        public byte[] AllocationIDBytes;
+        public byte[] ConnectionData;
+        public byte[] HostConnectionData;
+        public byte[] Key;
+    }
+
     private async Task<Allocation> CreateAllocationData()
     {
         try
@@ -129,6 +190,20 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error creating allocation: " + e);
+            throw;
+        }
+    }
+
+    private async Task<string> GetJoinCodeAsync(Guid allocationID)
+    {
+        try
+        {
+            string code = await Unity.Services.Relay.RelayService.Instance.GetJoinCodeAsync(allocationID);
+            return code;
+        }
+        catch ( SystemException e )
+        {
+            UnityEngine.Debug.Log("Error retrieving join code: " + e);
             throw;
         }
     }

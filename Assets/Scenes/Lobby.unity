@@ -1713,10 +1713,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Host
       objectReference: {fileID: 0}
-    - target: {fileID: 2448048989992218364, guid: 261111bda500825478e25058ee24fefa, type: 3}
-      propertyPath: m_text
-      value: Host Session
-      objectReference: {fileID: 0}
     - target: {fileID: 3183566700704818018, guid: 261111bda500825478e25058ee24fefa, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5

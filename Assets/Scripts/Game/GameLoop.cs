@@ -4,12 +4,16 @@ using UnityEngine;
 public class GameLoop : MonoBehaviour
 {
     [SerializeField] private GameState[] _states;
-    private int _gameRounds;
-    public int Round;
+    [SerializeField] private int _gameRounds = 8;
+    public int Round { get; private set; }
 
     private void Start()
     {
-        _gameRounds = 8;
+        // StartCoroutine(GameLoopCoroutine());
+    }
+
+    public void StartGame()
+    {
         StartCoroutine(GameLoopCoroutine());
     }
 
