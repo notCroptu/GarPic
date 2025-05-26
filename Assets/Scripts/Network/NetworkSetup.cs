@@ -171,7 +171,7 @@ public class NetworkSetup : MonoBehaviour
 
 #if UNITY_EDITOR
     [MenuItem("Tools/Build and Launch")]
-    public static void BuildLaunch()
+    public static void Build()
     {
         // Specify build options
         BuildPlayerOptions buildPlayerOptions = new BuildPlayerOptions();
@@ -190,9 +190,16 @@ public class NetworkSetup : MonoBehaviour
 
         if ( report.summary.result != BuildResult.Succeeded ) return;
 
+        Launch();
+    }
+
+    [MenuItem("Tools/Launch")]
+    public static void Launch()
+    {
         Process process = new Process();
-        process.StartInfo.FileName = Path.Combine("Builds", "BuildInstallLaunch.bat");
+        process.StartInfo.FileName = Path.Combine(Path.GetFullPath("Builds"), "BuildInstallLaunch.bat");
         process.StartInfo.WorkingDirectory = Path.GetFullPath("Builds");
+        UnityEngine.Debug.Log("Starting process with filename: " + process.StartInfo.FileName + " at: " + process.StartInfo.WorkingDirectory);
         process.StartInfo.UseShellExecute = true;
         process.Start();
     }
