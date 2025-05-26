@@ -3,15 +3,14 @@ using UnityEngine;
 
 public class LoadSupabaseConfig : MonoBehaviour
 {
+    [SerializeField] private TextAsset jsonData;
     public static SupabaseConfig Config;
 
     private void Awake()
     {
-        string path = Path.Combine(Application.streamingAssetsPath, "SBkeys.json");
-        if (File.Exists(path))
+        if ( jsonData != null )
         {
-            string json = File.ReadAllText(path);
-            Config = JsonUtility.FromJson<SupabaseConfig>(json);
+            Config = JsonUtility.FromJson<SupabaseConfig>(jsonData.text);
         }
         else
         {
