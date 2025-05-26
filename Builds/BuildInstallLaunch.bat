@@ -2,6 +2,10 @@
 
 set "adb=C:\Program Files\Unity\Hub\Editor\6000.0.30f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe"
 
+:: "C:\Program Files\Unity\Hub\Editor\6000.0.30f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" logcat -s Unity
+
+echo %cd%
+echo .
 "%adb%" devices
 
 echo Waiting for devices

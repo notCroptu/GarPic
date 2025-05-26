@@ -588,6 +588,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: NetworkManager
       objectReference: {fileID: 0}
+    - target: {fileID: 7453336077489047823, guid: 1780eeadf889ad04fbd4b2031fcc3e84, type: 3}
+      propertyPath: jsonData
+      value: 
+      objectReference: {fileID: 4900000, guid: 1204381ecf7180b44ad9ab4ee55ab187, type: 3}
     - target: {fileID: 7488507315659685354, guid: 1780eeadf889ad04fbd4b2031fcc3e84, type: 3}
       propertyPath: m_LocalPosition.x
       value: 587.22797
