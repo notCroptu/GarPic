@@ -112,6 +112,12 @@ The script logic goes as follows:
 - Runs connect/install/launch commands on specified targets.
 - Disconnects all previous connections for cleanup.
 
+> **Note:** It works the best with a strong internet connection.
+
+After this, I substituted the build and launch logic in `NetworkSetup` to use the .bad for launch on any connected phone.
+
+#### Debugging
+
 To debug builds on mobile, I just needed to once again use adb to start a `logcat` while the phone is connected with udb debugging like described here:
 
 [Unity Discussions - How to use adb logcat?](https://discussions.unity.com/t/how-to-use-adb-logcat/75785/2)
@@ -202,11 +208,13 @@ The client credentials however had to be put away in a json, hidden by GitIgnore
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
-https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG
+[Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)
 
 Relay servers, means that rather than hosting game worlds themselves, relay servers only provide the connections between players, which means they can serve many sessions at once, some relay servers like Steam's and PSN provide methods of authentication but we will only need anonymous users.
 
-This approach came from the setup simplicity for players, a simple UI and private sessions for friends that are easily manageable with short codes using Cloud.Unity relay.
+This approach came from the setup simplicity for players, a simple UI and private sessions for friends that are easily manageable with short codes using Cloud.Unity relay, as normal peer-to-peer networking suffers from firewall issues, and Unity Relay, like other relay services, solves this by keeping IPs between users safe:
+
+[Unity Support - About Relay IPs, Ports and Firewall Considerations](https://support.unity.com/hc/en-us/articles/20152286417044-About-Relay-IPs-Ports-and-Firewall-Considerations)
 
 #### Goals
 
@@ -214,15 +222,35 @@ On opening the app, players would be met with a join button, to join existing av
 
 When starting the game, players can either host a new session (generating a unique code) or join an existing session using a code shared by the host, sessions should handle up to 8 players and are open for joining until the game ends, but new players will join the ongoing game rather than restarting it for everyone.
 
-#### Implementation
+#### Cloud.Unity
 
 Firstly, I had to add the Relay service provided by Unity to the project through Unity Dashboard, which was easy, and the project was already registered in my account there.
 
 Then, on editor I turned on Relay on `UnityTransport` and used the `NetworkSetup` script to save transport information such as if the client is server, and if it is hosted as relay, and what the session number is, which will be helpful for identifying photos in Supabase.
 
+#### Server Setup
+
+When entering the game, players have the option to host a session, which creates a new relay server where they can play.
+
 Relay setup needs to be async, contrary to usual network workings, and had to be checked through a Task called Login, where an exception is run in case the Unity authentication services are not able to initialize and sign in.
 
-Then another Task, `CreateAllocationData`, calls the service again to create the session connection, which I can then ask for session information, like the session code.
+Then another Task, `CreateAllocationData`, calls the service again to create a new session connection with a given max players (8 for GarPic), which I can then ask for session information, like the session code, and store it in the class `RelayHostData`.
+
+Using one of the settings of the `RelayHostData` object, the allocation ID, I can call a final task `GetJoinCodeAsync`, to retrieve the session code for players to join with.
+
+After this the player is sent into the game scene where they may wait for at least 3 players to join, after which the host can start the game, and then the game logic is initialized and all clients synchronize to the main game scene.
+
+#### Client Setup
+
+Players who want to join a an existing session act as clients connect through the Unity Relay server using the session code provided by the host.
+
+Upon inserting this code one the Join button on teh lobby, the code is sent to the Relay service to find and join the correct allocation through the `JoinAllocationAsync` task.
+
+Once connected, the client’s state the game state is ready to be synchronized with the host.
+
+#### Error Handling
+
+Errors are displayed to the viewer at runtime in case a connection is not established.
 
 ### Conclusions
 

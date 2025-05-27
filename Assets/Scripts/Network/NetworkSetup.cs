@@ -12,10 +12,7 @@ using Unity.Services.Core;
 using Unity.Services.Authentication;
 using System.Threading.Tasks;
 using Unity.Services.Relay.Models;
-
-
-
-
+using UnityEngine.SceneManagement;
 
 
 #if UNITY_EDITOR
@@ -34,38 +31,32 @@ public class NetworkSetup : MonoBehaviour
     [SerializeField] private UnityTransport _transport;
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private int _maxPlayers;
+    [SerializeField] private string _gameScene = "GameScene";
     public bool IsRelay { get; private set; } = false;
     public bool IsServer  { get; private set; } = false;
-    private string _sessionCode;
-    public string SessionCode
-    {
-        get { return _sessionCode; }
-        set {
-            _sessionCode = value;
-            OnSetSession.Invoke(_sessionCode);
-        }
-    }
-    public Action<string> OnSetSession;
+    public string SessionCode { get; private set; }
 
+    public Action<string> OnError;
+    public Action<int> OnPlayerChange;
     private RelayHostData _relayData;
 
-    void Start()
+    public void StartServer()
     {
-        // Parse command line arguments
-        string[] args = Environment.GetCommandLineArgs();
-        for (int i = 0; i < args.Length; i++)
-        {
-            if (args[i] == "--server")
-            {
-                // --server found, this should be a server application
-                IsServer = true;
-            }
-        }
-
-        #if UNITY_EDITOR
         IsServer = true;
-        #endif
+        StartCoroutine(StartAsServerCR());
+    }
+    public void StartClient(string code)
+    {
+        SessionCode = code;
+        StartCoroutine(StartAsClientCR());
+    }
 
+    private void StartGame()
+    {
+        SceneManager.LoadSceneAsync(_gameScene);
+    }
+    private void Start()
+    {
         if ( _transport == null )
             _transport = GetComponent<UnityTransport>();
 
@@ -74,14 +65,9 @@ public class NetworkSetup : MonoBehaviour
     
         if ( _transport.Protocol == UnityTransport.ProtocolType.RelayUnityTransport )
             IsRelay = true;
-
-        if (IsServer)
-            StartCoroutine(StartAsServerCR());
-        else
-            StartCoroutine(StartAsClientCR());
     }
 
-    IEnumerator StartAsServerCR()
+    private IEnumerator StartAsServerCR()
     {
         _networkManager.enabled = true;
         _transport.enabled = true;
@@ -101,6 +87,7 @@ public class NetworkSetup : MonoBehaviour
             if ( loginTask.Exception != null )
             {
                 UnityEngine.Debug.Log("Login failed: " + loginTask.Exception);
+                OnError.Invoke(loginTask.Exception.ToString());
                 yield break;
             }
 
@@ -113,6 +100,7 @@ public class NetworkSetup : MonoBehaviour
             if ( allocationTask.Exception != null )
             {
                 UnityEngine.Debug.Log("Allocation failed: " + allocationTask.Exception);
+                OnError.Invoke(allocationTask.Exception.ToString());
                 yield break;
             }
             else
@@ -123,7 +111,7 @@ public class NetworkSetup : MonoBehaviour
                 _relayData = new RelayHostData();
 
                 // Find the first endpoint
-                foreach( var endpoint in allocation.ServerEndpoints )
+                foreach( RelayServerEndpoint endpoint in allocation.ServerEndpoints )
                 {
                     _relayData.IPv4Address = endpoint.Host;
                     _relayData.Port = (ushort) endpoint.Port;
@@ -134,13 +122,14 @@ public class NetworkSetup : MonoBehaviour
                 _relayData.ConnectionData = allocation.ConnectionData;
                 _relayData.Key = allocation.Key;
 
-                var joinCodeTask = GetJoinCodeAsync(_relayData.AllocationID);
+                Task<string> joinCodeTask = GetJoinCodeAsync();
 
                 yield return new WaitUntil( () => joinCodeTask.IsCompleted );
 
                 if ( joinCodeTask.Exception != null )
                 {
                     UnityEngine.Debug.Log("Join code failed: " + joinCodeTask.Exception);
+                    OnError.Invoke(joinCodeTask.Exception.ToString());
                     yield break;
                 }
                 else
@@ -148,10 +137,18 @@ public class NetworkSetup : MonoBehaviour
                     UnityEngine.Debug.Log("Code retrieved. ");
                     _relayData.JoinCode = joinCodeTask.Result;
                     SessionCode = _relayData.JoinCode;
+
+                    _transport.SetRelayServerData(
+                        _relayData.IPv4Address,
+                        _relayData.Port,
+                        _relayData.AllocationIDBytes,
+                        _relayData.Key,
+                        _relayData.ConnectionData);
                 }
             }
 
             UnityEngine.Debug.Log("Login successful. ");
+            StartGame();
         }
     }
 
@@ -166,6 +163,7 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error login: " + e);
+            OnError.Invoke(e.ToString());
             throw;
         }
 
@@ -194,20 +192,22 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error creating allocation: " + e);
+            OnError.Invoke(e.ToString());
             throw;
         }
     }
 
-    private async Task<string> GetJoinCodeAsync(Guid allocationID)
+    private async Task<string> GetJoinCodeAsync()
     {
         try
         {
-            string code = await Unity.Services.Relay.RelayService.Instance.GetJoinCodeAsync(allocationID);
+            string code = await Unity.Services.Relay.RelayService.Instance.GetJoinCodeAsync(_relayData.AllocationID);
             return code;
         }
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error retrieving join code: " + e);
+            OnError.Invoke(e.ToString());
             throw;
         }
     }
@@ -230,21 +230,80 @@ public class NetworkSetup : MonoBehaviour
         _clientIDs.Remove(clientId);
     }
 
-    IEnumerator StartAsClientCR()
+    private IEnumerator StartAsClientCR()
     {
-        var networkManager = GetComponent<NetworkManager>();
-        networkManager.enabled = true;
-        var transport = GetComponent<UnityTransport>();
-        transport.enabled = true;
+        _networkManager.enabled = true;
+        _transport.enabled = true;
         // Wait a frame for setups to be done
         yield return null;
-        if (networkManager.StartClient())
+
+        if (IsRelay)
         {
-            UnityEngine.Debug.Log($"Connecting on port {transport.ConnectionData.Port}...");
+            Task<bool> loginTask = Login();
+
+            yield return new WaitUntil( () => loginTask.IsCompleted );
+
+            if ( loginTask.Exception != null )
+            {
+                UnityEngine.Debug.LogError("Login failed: " + loginTask.Exception);
+                OnError.Invoke(loginTask.Exception.ToString());
+                yield break;
+            }
+
+            Task<JoinAllocation> joinAllocationTask = JoinAllocationAsync();
+
+            yield return new WaitUntil( () => joinAllocationTask.IsCompleted );
+
+            if ( joinAllocationTask.Exception != null )
+            {
+                UnityEngine.Debug.Log("Join allocation failed: " + joinAllocationTask.Exception);
+                OnError.Invoke(joinAllocationTask.Exception.ToString());
+                yield break;
+            }
+            else
+            {
+                UnityEngine.Debug.Log("Allocation joined. ");
+
+                _relayData = new RelayHostData();
+                JoinAllocation allocation = joinAllocationTask.Result;
+
+                foreach (RelayServerEndpoint endpoint in allocation.ServerEndpoints)
+                {
+                    _relayData.IPv4Address = endpoint.Host;
+                    _relayData.Port = (ushort) endpoint.Port;
+                    break;
+                }
+                _relayData.AllocationID = allocation.AllocationId;
+                _relayData.AllocationIDBytes = allocation.AllocationIdBytes;
+                _relayData.ConnectionData = allocation.ConnectionData;
+                _relayData.HostConnectionData = allocation.HostConnectionData;
+                _relayData.Key = allocation.Key;
+
+                _transport.SetRelayServerData(
+                    _relayData.IPv4Address,
+                    _relayData.Port,
+                    _relayData.AllocationIDBytes,
+                    _relayData.Key,
+                    _relayData.ConnectionData);
+            }
+
+            UnityEngine.Debug.LogError("Login successful! ");
+            StartGame();
         }
-        else
+    }
+
+    private async Task<JoinAllocation> JoinAllocationAsync()
+    {
+        try
         {
-            UnityEngine.Debug.LogError($"Failed to connect on port {transport.ConnectionData.Port}...");
+            JoinAllocation allocation = await Unity.Services.Relay.RelayService.Instance.JoinAllocationAsync(SessionCode);
+            return allocation;
+        }
+        catch ( SystemException e )
+        {
+            UnityEngine.Debug.Log("Error joining allocation: " + e);
+            OnError.Invoke(e.ToString());
+            throw;
         }
     }
 
@@ -262,7 +321,7 @@ public class NetworkSetup : MonoBehaviour
         buildPlayerOptions.target = BuildTarget.Android;
         buildPlayerOptions.options = BuildOptions.None;
         // Perform the build
-        var report = BuildPipeline.BuildPlayer(buildPlayerOptions);
+        BuildReport report = BuildPipeline.BuildPlayer(buildPlayerOptions);
         // Output the result of the build
         UnityEngine.Debug.Log($"Build ended with status: {report.summary.result}");
 

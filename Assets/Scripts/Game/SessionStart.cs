@@ -10,24 +10,19 @@ public class SessionStart : MonoBehaviour
     [SerializeField] private GameObject _canvas;
     [SerializeField] private NetworkSetup _networkSetup;
     [SerializeField] private GameLoop _gameLoop;
+    [SerializeField] private GameObject _playerList;
 
-    private void Awake()
+    private void Start()
     {
         _canvas.SetActive(true);
 
         if ( _networkSetup == null )
             _networkSetup = FindFirstObjectByType<NetworkSetup>();
         
-        _networkSetup.OnSetSession += UpdateSessionCode;
+        _sessionCode.text = _networkSetup.SessionCode;
         _startGame.interactable = false;
         _startGame.onClick.AddListener(OnStart);
         _startGame.onClick.AddListener(_gameLoop.StartGame);
-    }
-
-    public void UpdateSessionCode( string sessionCode )
-    {
-        _sessionCode.text = sessionCode;
-        // update start button add to action
     }
 
     public void UpdateStartButton( int currentPlayers )
@@ -42,6 +37,6 @@ public class SessionStart : MonoBehaviour
 
     private void OnDestroy()
     {
-        _networkSetup.OnSetSession -= UpdateSessionCode;
+        _networkSetup.OnPlayerChange -= UpdateStartButton;
     }
 }
