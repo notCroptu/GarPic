@@ -13,7 +13,17 @@ public class HostJoin : MonoBehaviour
     private void Start()
     {
         _networkSetup.OnError += GiveError;
+        _inputField.onValueChanged.AddListener(OnInputChanged);
     }
+
+private void OnInputChanged(string value)
+{
+    string upper = value.ToUpper();
+    if (upper == _inputField.text)
+        return;
+    _inputField.text = upper;
+    _inputField.caretPosition = upper.Length;
+}
 
     public void StartClient()
     {
@@ -32,7 +42,7 @@ public class HostJoin : MonoBehaviour
         _errorText.text = error;
         _inputField.text = "";
 
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(4.5f);
 
         _errorGO.SetActive(false);
     }

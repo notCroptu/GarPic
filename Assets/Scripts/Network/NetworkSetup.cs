@@ -13,6 +13,8 @@ using Unity.Services.Authentication;
 using System.Threading.Tasks;
 using Unity.Services.Relay.Models;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
+
 
 
 #if UNITY_EDITOR
@@ -48,7 +50,17 @@ public class NetworkSetup : MonoBehaviour
     public void StartClient(string code)
     {
         SessionCode = code;
+        UnityEngine.Debug.Log("Session code is now: " + code + " c: " + code.Length);
         StartCoroutine(StartAsClientCR());
+    }
+
+    [SerializeField] private Image _image;
+    private void Update()
+    {
+        if (NetworkManager.Singleton.IsServer)
+            _image.color = Color.green;
+        else
+            _image.color = Color.red;
     }
 
     private void StartGame()
@@ -87,7 +99,7 @@ public class NetworkSetup : MonoBehaviour
             if ( loginTask.Exception != null )
             {
                 UnityEngine.Debug.Log("Login failed: " + loginTask.Exception);
-                OnError.Invoke(loginTask.Exception.ToString());
+                OnError.Invoke("Could not connect to Unity services. Please check your internet connection and try again.");
                 yield break;
             }
 
@@ -100,7 +112,7 @@ public class NetworkSetup : MonoBehaviour
             if ( allocationTask.Exception != null )
             {
                 UnityEngine.Debug.Log("Allocation failed: " + allocationTask.Exception);
-                OnError.Invoke(allocationTask.Exception.ToString());
+                OnError.Invoke("Could not create a game session. Please check your connection or try again in a few moments.");
                 yield break;
             }
             else
@@ -129,7 +141,7 @@ public class NetworkSetup : MonoBehaviour
                 if ( joinCodeTask.Exception != null )
                 {
                     UnityEngine.Debug.Log("Join code failed: " + joinCodeTask.Exception);
-                    OnError.Invoke(joinCodeTask.Exception.ToString());
+                    OnError.Invoke("Unable to generate a session code. Please try again.");
                     yield break;
                 }
                 else
@@ -148,6 +160,7 @@ public class NetworkSetup : MonoBehaviour
             }
 
             UnityEngine.Debug.Log("Login successful. ");
+            NetworkManager.Singleton.StartServer();
             StartGame();
         }
     }
@@ -163,7 +176,6 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error login: " + e);
-            OnError.Invoke(e.ToString());
             throw;
         }
 
@@ -192,7 +204,6 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error creating allocation: " + e);
-            OnError.Invoke(e.ToString());
             throw;
         }
     }
@@ -207,7 +218,6 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error retrieving join code: " + e);
-            OnError.Invoke(e.ToString());
             throw;
         }
     }
@@ -246,7 +256,7 @@ public class NetworkSetup : MonoBehaviour
             if ( loginTask.Exception != null )
             {
                 UnityEngine.Debug.LogError("Login failed: " + loginTask.Exception);
-                OnError.Invoke(loginTask.Exception.ToString());
+                OnError.Invoke("Could not connect to Unity services. Please check your internet connection and try again.");
                 yield break;
             }
 
@@ -257,7 +267,7 @@ public class NetworkSetup : MonoBehaviour
             if ( joinAllocationTask.Exception != null )
             {
                 UnityEngine.Debug.Log("Join allocation failed: " + joinAllocationTask.Exception);
-                OnError.Invoke(joinAllocationTask.Exception.ToString());
+                OnError.Invoke("Could not join the game session. The session code may be invalid or the session is full.");
                 yield break;
             }
             else
@@ -302,7 +312,6 @@ public class NetworkSetup : MonoBehaviour
         catch ( SystemException e )
         {
             UnityEngine.Debug.Log("Error joining allocation: " + e);
-            OnError.Invoke(e.ToString());
             throw;
         }
     }
