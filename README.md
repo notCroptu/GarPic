@@ -202,8 +202,6 @@ This doesn't mean it will take more work later as I only need clients to be awar
 
 The client credentials however had to be put away in a json, hidden by GitIgnore in order to keep the project safe in the git. Therefore Supabase would only work in my own PC or builds I make.
 
-### Netcode for GameObjects
-
 ### Server Relay
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
@@ -251,6 +249,14 @@ Once connected, the client’s state the game state is ready to be synchronized 
 #### Error Handling
 
 Errors are displayed to the viewer at runtime in case a connection is not established.
+
+### Netcode
+
+#### Session Lobby
+
+Session lobby is handled in `SessionStart`, where all players are displayed by their chosen nicknames.
+
+Players are able to edit their own nickname, and nicknames ae shared between players using a NetworkList.
 
 ### Conclusions
 

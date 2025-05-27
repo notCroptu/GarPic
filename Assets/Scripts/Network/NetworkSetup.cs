@@ -29,7 +29,6 @@ using System.Runtime.InteropServices;
 
 public class NetworkSetup : MonoBehaviour
 {
-    private List<ulong> _clientIDs;
     [SerializeField] private UnityTransport _transport;
     [SerializeField] private NetworkManager _networkManager;
     [SerializeField] private int _maxPlayers;
@@ -39,7 +38,6 @@ public class NetworkSetup : MonoBehaviour
     public string SessionCode { get; private set; }
 
     public Action<string> OnError;
-    public Action<int> OnPlayerChange;
     private RelayHostData _relayData;
 
     public void StartServer()
@@ -54,6 +52,7 @@ public class NetworkSetup : MonoBehaviour
         StartCoroutine(StartAsClientCR());
     }
 
+    // debug purposes, remove later
     [SerializeField] private Image _image;
     private void Update()
     {
@@ -227,8 +226,6 @@ public class NetworkSetup : MonoBehaviour
         if ( ! NetworkManager.Singleton.IsServer ) return;
 
         UnityEngine.Debug.Log($"Player {clientId} connected!");
-
-        _clientIDs.Add(clientId);
     }
 
     private void OnClientDisconnected(ulong clientId)
@@ -236,8 +233,6 @@ public class NetworkSetup : MonoBehaviour
         if ( ! NetworkManager.Singleton.IsServer ) return;
 
         UnityEngine.Debug.Log($"Player {clientId} disconnected!");
-
-        _clientIDs.Remove(clientId);
     }
 
     private IEnumerator StartAsClientCR()
