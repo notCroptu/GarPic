@@ -56,7 +56,7 @@ public class NetworkSetup : MonoBehaviour
     [SerializeField] private Image _image;
     private void Update()
     {
-        if (NetworkManager.Singleton.IsServer)
+        if ( NetworkManager.Singleton != null && IsServer)
             _image.color = Color.green;
         else
             _image.color = Color.red;
@@ -64,7 +64,8 @@ public class NetworkSetup : MonoBehaviour
 
     private void StartGame()
     {
-        SceneManager.LoadSceneAsync(_gameScene);
+        // SceneManager.LoadSceneAsync(_gameScene);
+        NetworkManager.Singleton.SceneManager.LoadScene(_gameScene, LoadSceneMode.Single);
     }
     private void Start()
     {
@@ -292,7 +293,7 @@ public class NetworkSetup : MonoBehaviour
                     _relayData.ConnectionData);
             }
 
-            UnityEngine.Debug.LogError("Login successful! ");
+            UnityEngine.Debug.Log("Login successful! ");
             StartGame();
         }
     }

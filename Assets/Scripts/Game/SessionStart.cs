@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using Unity.Collections;
 using Unity.Netcode;
@@ -11,10 +12,11 @@ public class SessionStart : NetworkBehaviour
     [SerializeField] private Button _startGame;
     [SerializeField] private GameObject _canvas;
     [SerializeField] private GameLoop _gameLoop;
-    [SerializeField] private GameObject _playerList;
+    [SerializeField] private TMP_Text[] _playerList;
+    [SerializeField] private Button _editNickname;
     [SerializeField] private TMP_InputField _InputField;
 
-    private NetworkList<NetworkNickname> _nicknames = new();
+    private NetworkList<NetworkNickname> _nicknames;
     private NetworkSetup _networkSetup;
 
     public struct NetworkNickname : INetworkSerializable, IEquatable<NetworkNickname>
@@ -34,38 +36,48 @@ public class SessionStart : NetworkBehaviour
         }
     }
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
-        _canvas.SetActive(true);
+        Debug.Log("OnNetworkSpawn IsServer: " + IsServer );
 
-        _networkSetup = FindFirstObjectByType<NetworkSetup>();
-        _sessionCode.text = _networkSetup.SessionCode;
+        base.OnNetworkSpawn();
 
-        if ( ! NetworkManager.Singleton.IsHost )
+        _nicknames ??= new NetworkList<NetworkNickname>(
+                new List<NetworkNickname>(),
+                NetworkVariableReadPermission.Everyone,
+                NetworkVariableWritePermission.Server
+            );
+
+        if ( IsHost || IsServer )
         {
-            _startGame.gameObject.SetActive(false);
-        }
-        else
-        {
+            Debug.Log("Started as host. ");
+
             _startGame.interactable = false;
             _startGame.onClick.AddListener(OnStart);
             _startGame.onClick.AddListener(_gameLoop.StartGame);
 
             NetworkManager.Singleton.OnClientConnectedCallback += AddPlayer;
             NetworkManager.Singleton.OnClientDisconnectCallback += RemovePlayer;
+
+            AddPlayer(NetworkManager.Singleton.LocalClientId);
+        }
+        else
+        {
+            _startGame.gameObject.SetActive(false);
         }
 
-        _nicknames ??= new NetworkList<NetworkNickname>();
+        _InputField.text = NetworkManager.Singleton.LocalClientId.ToString();
 
         _nicknames.OnListChanged += UpdatePlayerList;
-
-        _InputField.text = NetworkManager.Singleton.LocalClientId.ToString();
+        UpdatePlayerList(default);
     }
 
-    public void UpdatePlayerList(NetworkListEvent<NetworkNickname> change)
+    private void Start()
     {
-        // ui stuff
-        // update players and add edit button to player bar
+        _canvas.SetActive(true);
+
+        _networkSetup = FindFirstObjectByType<NetworkSetup>();
+        _sessionCode.text = _networkSetup.SessionCode;
     }
 
     /// <summary>
@@ -73,6 +85,7 @@ public class SessionStart : NetworkBehaviour
     /// </summary>
     public void UpdatePlayerNickname()
     {
+        Debug.Log("host? " + IsHost + " Starting set nick from: " + NetworkManager.Singleton.LocalClientId + " new nick: " + _InputField.text);
         SetNicknameServerRpc(_InputField.text);
     }
 
@@ -84,7 +97,8 @@ public class SessionStart : NetworkBehaviour
         {
             if (_nicknames[i].clientId == clientId)
             {
-                var entry = _nicknames[i];
+                Debug.Log("host? Setting player nick: " + nickname);
+                NetworkNickname entry = _nicknames[i];
                 entry.nickname = nickname;
                 _nicknames[i] = entry;
                 break;
@@ -93,19 +107,61 @@ public class SessionStart : NetworkBehaviour
     }
 
     /// <summary>
+    /// Update players and add edit button to player bar.
+    /// </summary>
+    public void UpdatePlayerList(NetworkListEvent<NetworkNickname> change)
+    {
+        Debug.Log("Nicknames OnDeltaListChanged: " + change.Type);
+
+        foreach ( TMP_Text text in _playerList )
+            text.transform.parent.gameObject.SetActive(false);
+        
+        for ( int i = 0 ; i < _nicknames.Count ; i++ )
+        {
+            if ( _playerList.Length <= i ) break;
+
+            _playerList[i].transform.parent.gameObject.SetActive(true);
+            _playerList[i].text = _nicknames[i].nickname.ToString();
+
+            if ( _nicknames[i].clientId == NetworkManager.Singleton.LocalClientId )
+            {
+                Vector3 pos = _editNickname.transform.position;
+                pos.y = _playerList[i].transform.position.y;
+                _editNickname.transform.position = pos;
+            }
+        }
+    }
+
+    // the 3 next methods ar only available for host
+
+    /// <summary>
     /// Only host should be accessing these
     /// </summary>
     public void AddPlayer(ulong playerID)
     {
-        NetworkNickname nickname = new NetworkNickname();
-        nickname.clientId = playerID;
+        if ( ! IsServer ) return; // the init on OnNetworkSpawn should block the usage of add and remove from anyone other than host but prevent.
+
+        NetworkNickname nickname = new() { clientId = playerID };
         _nicknames.Add(nickname);
+
+        Debug.Log("host? Added new player: " + playerID + " nick count now: " + _nicknames.Count);
 
         UpdateStartButton(_nicknames.Count);
     }
 
     public void RemovePlayer(ulong playerID)
     {
+        if ( ! IsServer ) return;
+
+        for (int i = 0; i < _nicknames.Count; i++)
+        {
+            if (_nicknames[i].clientId == playerID)
+            {
+                _nicknames.Remove(_nicknames[i]);
+                Debug.Log("host? Removed player: " + playerID + " nick count now: " + _nicknames.Count);
+                break;
+            }
+        }
         UpdateStartButton(_nicknames.Count);
     }
 
@@ -114,6 +170,8 @@ public class SessionStart : NetworkBehaviour
     /// </summary>
     public void UpdateStartButton( int currentPlayers )
     {
+        if ( ! IsServer ) return;
+
         _startGame.interactable = currentPlayers >= 2; // 2 phones for now, should be 3
     }
 
@@ -133,10 +191,10 @@ public class SessionStart : NetworkBehaviour
 
     private void OnDisable()
     {
-        if ( NetworkManager.Singleton.IsHost )
+        if (NetworkManager.Singleton != null && IsHost )
         {
-            NetworkManager.Singleton.OnClientConnectedCallback += AddPlayer;
-            NetworkManager.Singleton.OnClientDisconnectCallback += RemovePlayer;
+            NetworkManager.Singleton.OnClientConnectedCallback -= AddPlayer;
+            NetworkManager.Singleton.OnClientDisconnectCallback -= RemovePlayer;
         }
     }
 }

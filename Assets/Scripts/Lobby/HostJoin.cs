@@ -9,6 +9,8 @@ public class HostJoin : MonoBehaviour
     [SerializeField] private NetworkSetup _networkSetup;
     [SerializeField] private GameObject _errorGO;
     [SerializeField] private TMP_Text _errorText;
+    [SerializeField] private Button _Done;
+    [SerializeField] private Button _Host;
 
     private void Start()
     {
@@ -28,11 +30,20 @@ private void OnInputChanged(string value)
     public void StartClient()
     {
         _networkSetup.StartClient(_inputField.text);
+        _Done.interactable = false;
+    }
+
+    public void StartServer()
+    {
+        _networkSetup.StartServer();
+        _Host.interactable = false;
     }
 
     public void GiveError(string error)
     {
         StartCoroutine(Error(error));
+        _Host.interactable = true;
+        _Done.interactable = true;
     }
 
     private IEnumerator Error(string error)

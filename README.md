@@ -206,7 +206,7 @@ The client credentials however had to be put away in a json, hidden by GitIgnore
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
-[Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)
+[![Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)]
 
 Relay servers, means that rather than hosting game worlds themselves, relay servers only provide the connections between players, which means they can serve many sessions at once, some relay servers like Steam's and PSN provide methods of authentication but we will only need anonymous users.
 
@@ -252,15 +252,48 @@ Errors are displayed to the viewer at runtime in case a connection is not establ
 
 ### Netcode
 
+Since I didn’t need to synchronize transforms, I decided to use a single `NetworkObject` object that contains both the session manager and game loop logic, and serves as the central authority for all network communication.
+
+Since I didn’t need to synchronize any transforms, I thought this choice was ideal, with the goal of reducing relay traffic by consolidating all network communication into one object instead of spreading it across multiple GameObjects with separate `NetworkObject` components, even if those had transform syncing disabled.
+
+To start, I added the `NetworkObject` cat the top of my component list, as the unity documentation warns to do for proper execution order:
+
+[Unity Netcode Docs - NetworkObject Component Order](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/#component-order)
+
 #### Session Lobby
 
-Session lobby is handled in `SessionStart`, where all players are displayed by their chosen nicknames.
+The session lobby is managed by the `SessionStart` script. At first, all players are displayed using their `clientId`, but each player can edit their nickname, which is then used throughout the game session.
 
-Players are able to edit their own nickname, and nicknames ae shared between players using a NetworkList.
+Nicknames are shared across all players using a `NetworkList`, which is owned and modified only by the host. Clients cannot modify the list directly but must send a request to the host instead containing the nick string and their client ID.
+
+Since I couldn’t rely on each client to detect new connections and add entries themselves as they could add each other multiple times, I created a server RPC method, `SetNicknameServerRpc`, which updates the nickname associated with a given `clientId` when requested. Each client has a confirm button tied to `UpdatePlayerNickname`, which sends this request to the server. Once the nickname is updated in the list, the `OnListChanged` event is triggered, which all clients listen to in order to refresh their UI.
+
+At first, I had issues with the nickname list not being initialized properly. Even though I was assigning it in `Awake()`, I kept getting null reference errors and `OnListChanged` was not firing. After some research and testing, I realized that this was happening because `Start()` was running before the `NetworkObject` was fully initialized, and as a result of initializing the list before `NetworkObject` it became null again when it finally searched for network variables to sync.
+
+To fix this, I moved all network-related logic into one of `NetworkBehavior`s methods, `OnNetworkSpawn()`, that is guaranteed to run only after the network object is setup.
+
+I found this behavior explained and confirmed in this video:
+
+[![Multiplayer Setup in Unity NGO - OnNetworkSpawn](https://youtu.be/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587)]
+
+[![Multiplayer Setup in Unity NGO - NetworkVariable](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)]
+
+However, even after this, changes to the nickname list were still not being shared with other clients. I found the problem was that `SessionStart` was placed directly in the scene and not set to spawn like with dynamic network objects using `NetworkObject.Spawn()`, and because I was also switching scenes (from the lobby to the game), the object was not automatically registered and synced across clients.
+
+[Unity Forum - Scene object with NetworkObject disappears on client](https://discussions.unity.com/t/scene-object-with-networkobject-disappears-on-client/939204)
+
+So I enabled Scene Management in the `NetworkManager` and started using `NetworkManager.Singleton.SceneManager.LoadScene()` to transition between scenes instead of directly with `SceneManager`, so it knows to find and synchronize scene spawned objects across all clients during scene loading.
 
 ### Conclusions
 
+DontDestroyWithOwner for switching host in case of disconnect?
+
+events and delegates are very good
+
 Wa
+
+https://www.youtube.com/watch?v=YmUnXsOp_t0
+https://discussions.unity.com/t/how-to-use-networklist/947471/2
 
 https://discussions.unity.com/t/how-to-refer-to-internal-json-file-on-android/222832
 
