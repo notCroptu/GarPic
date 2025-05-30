@@ -176,7 +176,7 @@ To integrate this into Unity, more specifically in the `WordSelection` script, I
 
 #### Data Retrieval
 
-With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the *OLD* official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).html.
+With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the *OLD* official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).
 
 Basically, you create a new `UnityWebRequest`, input a source URL from which it will get data (`UnityWebRequest www = UnityWebRequest.Get("url"`) and wait for it to return a result inside a coroutine, where upon completion you can check for success and choose to try again.
 
@@ -206,7 +206,7 @@ The client credentials however had to be put away in a json, hidden by GitIgnore
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
-[![Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)]
+[![Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)
 
 Relay servers, means that rather than hosting game worlds themselves, relay servers only provide the connections between players, which means they can serve many sessions at once, some relay servers like Steam's and PSN provide methods of authentication but we will only need anonymous users.
 
@@ -274,9 +274,9 @@ To fix this, I moved all network-related logic into one of `NetworkBehavior`s me
 
 I found this behavior explained and confirmed in this video:
 
-[![Multiplayer Setup in Unity NGO - OnNetworkSpawn](https://youtu.be/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587)]
+[![Multiplayer Setup in Unity NGO - OnNetworkSpawn](https://youtu.be/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587)](https://youtu.be/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587)
 
-[![Multiplayer Setup in Unity NGO - NetworkVariable](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)]
+[![Multiplayer Setup in Unity NGO - NetworkVariable](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)
 
 However, even after this, changes to the nickname list were still not being shared with other clients. I found the problem was that `SessionStart` was placed directly in the scene and not set to spawn like with dynamic network objects using `NetworkObject.Spawn()`, and because I was also switching scenes (from the lobby to the game), the object was not automatically registered and synced across clients.
 
@@ -292,6 +292,8 @@ events and delegates are very good
 
 Wa
 
+https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/
+
 https://www.youtube.com/watch?v=YmUnXsOp_t0
 https://discussions.unity.com/t/how-to-use-networklist/947471/2
 
@@ -299,11 +301,15 @@ https://discussions.unity.com/t/how-to-refer-to-internal-json-file-on-android/22
 
 https://discussions.unity.com/t/how-do-i-make-locationservice-start-work/153995
 
+https://support.unity.com/hc/en-us/articles/20152286417044-About-Relay-IPs-Ports-and-Firewall-Considerations
+
 https://docs.unity3d.com/Manual/UnityRemote5.html
 https://stackoverflow.com/questions/15800303/pausing-an-assembly-program
 https://developer.android.com/tools/adb
 https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.html
 https://docs.unity3d.com/Manual//android-manifest.html
+
+https://docs.unity3d.com/ScriptReference/WebCamTexture.html
 
 ### **Bibliography**
 
