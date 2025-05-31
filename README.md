@@ -294,9 +294,25 @@ Each client has a confirm button tied to `UpdatePlayerNickname`, which sends thi
 
 However, I discovered that the server or host client can't call a Server RPC, but since I cannot allow clients to have write permission on the list directly, I had to separate `SetNicknameServerRpc` into `SetNickname` method so if the calling client is the server, it can skip RPC and directly modify the list. The new method is responsible for actually modifying the list and to invoke `OnListChanged` event, and notify all clients, while the `SetNicknameServerRpc` is now only used for regular clients to tell the server to use `SetNickname`.
 
+Regardless of `ServerRpc` permissions, `ClientRpc` will still call all clients, including the host, which useful for telling clients to close their session lobby canvases when the game starts on the host's side.
+
+#### Game Loop
+
+The Game Loop controls the overall game state, so whether players are supposed to be taking pictures, voting, or viewing the leaderboard, this control must come from a single client. Logically, this responsibility is given to the server or host, who is also the only one allowed to start the game with session start's "Start Game" button.
+
+Inside the `GameLoop` script, a main coroutine iterates over an array of `GameState`s for a set number of rounds, and both `GameLoop` and the individual `GameState` scripts are `NetworkBehaviour`s.
+
+The goal is that each `GameState` holds `NetworkVariable`s and uses RPCs to trigger UI changes on clients while the main game logic runs on the host side within the coroutine, modifying those variables and calling RPCs manually to make sure all clients remain synchronized.
+
+#### WordSelection
+
+Word Selection is the first game state in the loop and includes a `NetworkVariable` for the word that players must take pictures of, and a timer value that tells players how long they have to prepare.
+
 ### Conclusions
 
 DontDestroyWithOwner for switching host in case of disconnect?
+
+when host is disconnected game does not register it going away and doesnt switch automatically the host?
 
 events and delegates are very good
 

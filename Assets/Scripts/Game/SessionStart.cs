@@ -64,7 +64,6 @@ public class SessionStart : NetworkBehaviour
 
             _startGame.interactable = false;
             _startGame.onClick.AddListener(OnStart);
-            _startGame.onClick.AddListener(_gameLoop.StartGame);
 
             _networkSetup.NetworkManager.OnClientConnectedCallback += AddPlayer;
             _networkSetup.NetworkManager.OnClientDisconnectCallback += RemovePlayer;
@@ -176,7 +175,7 @@ public class SessionStart : NetworkBehaviour
     {
         if ( ! IsServer ) return; // the init on OnNetworkSpawn should block the usage of add and remove from anyone other than host but prevent.
 
-        NetworkNickname nickname = new() { clientId = playerID, nickname = playerID.ToString() };
+        NetworkNickname nickname = new() { clientId = playerID, nickname = "P" + playerID.ToString() };
         _nicknames.Add(nickname);
 
         Debug.Log("host? Added new player: " + playerID + " nick count now: " + _nicknames.Count);
@@ -207,7 +206,7 @@ public class SessionStart : NetworkBehaviour
     {
         if ( ! IsServer ) return;
 
-        _startGame.interactable = currentPlayers >= 2; // 2 phones for now, should be 3
+        _startGame.interactable = currentPlayers >= 1; // 1 phones for now, should be 3
     }
 
     public NetworkNickname FindNickname(ulong clientId)
@@ -220,6 +219,13 @@ public class SessionStart : NetworkBehaviour
     }
 
     public void OnStart()
+    {
+        DisableSessionLobbyClientRpc();
+        _gameLoop.StartGame();
+    }
+
+    [ClientRpc]
+    public void DisableSessionLobbyClientRpc()
     {
         _canvas.SetActive(false);
     }

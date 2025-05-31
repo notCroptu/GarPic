@@ -319,7 +319,7 @@ public class NetworkSetup : MonoBehaviour
             if ( ! NetworkManager.IsConnectedClient )
             {
                 OnError.Invoke("Could not join server in time. ");
-                // yield break;
+                yield break;
             }
 
             // StartGame();

@@ -14,8 +14,6 @@ public class PhotoTaking : GameState
     private WebCamTexture _webcamTexture;
     [SerializeField] private Texture2D _nullTexture;
 
-    private NetworkSetup _networkSetup;
-
     private byte[] _imageBytes;
     private Texture2D _photo;
 

@@ -1,26 +1,49 @@
 using System.Collections;
 using TMPro;
+using Unity.Collections;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
 
 public class WordSelection : GameState
 {
-    [field:SerializeField] public string Word { get; private set; }
-    [SerializeField] private TMP_Text _word;
+    public string Word => _word.Value.ToString();
+    private NetworkVariable<FixedString32Bytes> _word = new();
+    private NetworkVariable<int> _timer = new();
+    [SerializeField] private TMP_Text _wordTMP;
+    [SerializeField] private TMP_Text _timerTMP;
     [SerializeField] private GameObject _canvas;
 
-    private string[] _topics = { "object", "emotion", "scene", "action", "place", "animal" };
+    private static readonly string[] _topics = 
+        { "object", "emotion", "scene", "action", "place", "animal" };
+
+    public override void OnNetworkSpawn()
+    {
+        Debug.Log("OnNetworkSpawn IsServer: " + IsServer );
+
+        base.OnNetworkSpawn();
+
+        _word ??= new();
+        _timer ??= new();
+
+        _word.OnValueChanged += (_, _) => UpdateWord();
+        _timer.OnValueChanged += (_, _) => UpdateTimer();
+    }
+
+    private void Start()
+    {
+        _wordTMP.gameObject.SetActive(false);
+        _timerTMP.gameObject.SetActive(false);
+        _canvas.SetActive(true);
+    }
 
     public override IEnumerator State()
     {
-        // _canvas.SetActive(true);
+        yield return base.State();
 
-        Debug.Log("starting WordSelection. ");
-
-        string url = "https://api.datamuse.com/words?rel_jja=" + _topics[ Random.Range(0, _topics.Length) ] + "&max=1";
+        string topic = _topics[Random.Range(0, _topics.Length)];
+        string url = $"https://api.datamuse.com/words?rel_jja={topic}&max=1";
         using UnityWebRequest www = UnityWebRequest.Get(url);
-        
-        Word = null;
 
         do
         {
@@ -32,12 +55,39 @@ public class WordSelection : GameState
         
         int start = json.IndexOf("\"word\":\"") + 8;
         int end = json.IndexOf("\"", start);
-        Word = json[start..end];
-
-        _word.text = Word;
+        _word.Value = new FixedString32Bytes( json[start..end]);
 
         Debug.Log("done WordSelection: " + www.downloadHandler.text + " to word: " + Word);
 
-        // _canvas.SetActive(false);
+        // start countdown
+
+        float t = 10f;
+        while ( t > 0f )
+        {
+            t -= Time.deltaTime;
+
+            int t2 = Mathf.FloorToInt(t);
+            if ( t2 != _timer.Value && t2 >= 0)
+                _timer.Value = t2;
+        
+            yield return null;
+        }
+    }
+
+    private void UpdateWord()
+    {
+        // update word on UI
+        if ( ! _wordTMP.gameObject.activeSelf )
+            _wordTMP.gameObject.SetActive(true);
+
+        _wordTMP.text = Word;
+    }
+
+    private void UpdateTimer()
+    {
+        if ( ! _timerTMP.gameObject.activeSelf )
+            _timerTMP.gameObject.SetActive(true);
+
+        _timerTMP.text = _timer.Value.ToString();
     }
 }

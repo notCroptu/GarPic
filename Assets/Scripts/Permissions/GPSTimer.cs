@@ -40,7 +40,7 @@ public class GPSTimer : MonoBehaviour
         #endif
 
         // Start service before querying location
-        Input.location.Start(5f, 5f);
+        Input.location.Start(1f, 1f);
                 
         // Wait until service initializes
         int maxWait = 15;

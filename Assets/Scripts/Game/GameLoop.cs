@@ -1,7 +1,8 @@
 using System.Collections;
+using Unity.Netcode;
 using UnityEngine;
 
-public class GameLoop : MonoBehaviour
+public class GameLoop : NetworkBehaviour
 {
     [SerializeField] private GameState[] _states;
     [SerializeField] private int _gameRounds = 8;
@@ -14,6 +15,12 @@ public class GameLoop : MonoBehaviour
 
     public void StartGame()
     {
+        Debug.Log("Trying to start game loop. ");
+
+        if ( ! IsServer && ! IsHost ) return; // only host allowed to run game loop
+
+        Debug.Log("Trying to start game loop. and is server or host. ");
+
         StartCoroutine(GameLoopCoroutine());
     }
 
@@ -24,6 +31,7 @@ public class GameLoop : MonoBehaviour
             Round = i;
             foreach (GameState state in _states)
             {
+                Debug.Log("Starting gamestate: " + state.name);
                 yield return state.State();
             }
         }
