@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using Unity.Collections;
@@ -16,7 +17,11 @@ public class SessionStart : NetworkBehaviour
     [SerializeField] private Button _editNickname;
     [SerializeField] private TMP_InputField _InputField;
 
-    private NetworkList<NetworkNickname> _nicknames;
+    private NetworkList<NetworkNickname> _nicknames = new NetworkList<NetworkNickname>(
+                new List<NetworkNickname>(),
+                NetworkVariableReadPermission.Everyone,
+                NetworkVariableWritePermission.Server
+            );
     private NetworkSetup _networkSetup;
 
     public struct NetworkNickname : INetworkSerializable, IEquatable<NetworkNickname>
@@ -42,11 +47,13 @@ public class SessionStart : NetworkBehaviour
 
         base.OnNetworkSpawn();
 
-        _nicknames ??= new NetworkList<NetworkNickname>(
+        /* _nicknames ??= new NetworkList<NetworkNickname>(
                 new List<NetworkNickname>(),
                 NetworkVariableReadPermission.Everyone,
                 NetworkVariableWritePermission.Server
-            );
+            );*/
+        _nicknames.OnListChanged += UpdatePlayerList;
+        _InputField.text = NetworkManager.Singleton.LocalClientId.ToString();
 
         if ( IsHost || IsServer )
         {
@@ -66,9 +73,15 @@ public class SessionStart : NetworkBehaviour
             _startGame.gameObject.SetActive(false);
         }
 
-        _InputField.text = NetworkManager.Singleton.LocalClientId.ToString();
+        StartCoroutine( DelayUI() );
+    }
 
-        _nicknames.OnListChanged += UpdatePlayerList;
+    /// <summary>
+    /// UI isn't finished setting real positions until later, so update then
+    /// </summary>
+    private IEnumerator DelayUI()
+    {
+        yield return null;
         UpdatePlayerList(default);
     }
 
@@ -85,25 +98,46 @@ public class SessionStart : NetworkBehaviour
     /// </summary>
     public void UpdatePlayerNickname()
     {
-        Debug.Log("host? " + IsHost + " Starting set nick from: " + NetworkManager.Singleton.LocalClientId + " new nick: " + _InputField.text);
-        SetNicknameServerRpc(_InputField.text);
+        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        string newNickname = _InputField.text;
+
+        // Prevent spamming the done button
+        if (FindNickname(clientId).nickname == newNickname)
+            return;
+
+        Debug.Log("host? " + (IsServer || IsHost) + " Starting set nick from: " + NetworkManager.Singleton.LocalClientId + " new nick: " + _InputField.text);
+
+        if (IsServer)
+            SetNickname(clientId, newNickname);
+        else
+            SetNicknameServerRpc(newNickname);
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SetNicknameServerRpc(string nickname, ServerRpcParams rpcParams = default)
+    private void SetNicknameServerRpc(string nickname, ServerRpcParams rpcParams = default)
     {
         ulong clientId = rpcParams.Receive.SenderClientId;
+        Debug.Log("ServerRpc Set nickname: " + clientId + " new nick: " + nickname);
+        SetNickname(clientId, nickname);
+    }
+
+    public void SetNickname(ulong clientId, string nickname)
+    {
+        Debug.Log("host? " + (IsServer || IsHost) + " Setting set nick from: " + clientId + " new nick: " + nickname);
+
         for (int i = 0; i < _nicknames.Count; i++)
         {
             if (_nicknames[i].clientId == clientId)
             {
                 Debug.Log("host? Setting player nick: " + nickname);
-                NetworkNickname entry = _nicknames[i];
-                entry.nickname = nickname;
-                _nicknames[i] = entry;
-                break;
+                _nicknames[i] = new NetworkNickname { clientId = clientId, nickname = nickname };
+                return;
             }
         }
+
+        // if not found
+        NetworkNickname nick = new() { clientId = clientId, nickname = nickname };
+        _nicknames.Add(nick);
     }
 
     /// <summary>
@@ -112,23 +146,24 @@ public class SessionStart : NetworkBehaviour
     public void UpdatePlayerList(NetworkListEvent<NetworkNickname> change)
     {
         Debug.Log("Nicknames OnDeltaListChanged: " + change.Type);
-
-        foreach ( TMP_Text text in _playerList )
-            text.transform.parent.gameObject.SetActive(false);
         
-        for ( int i = 0 ; i < _nicknames.Count ; i++ )
+        for ( int i = 0 ; i < _playerList.Length ; i++ )
         {
-            if ( _playerList.Length <= i ) break;
-
-            _playerList[i].transform.parent.gameObject.SetActive(true);
-            _playerList[i].text = _nicknames[i].nickname.ToString();
-
-            if ( _nicknames[i].clientId == NetworkManager.Singleton.LocalClientId )
+            if ( i < _nicknames.Count )
             {
-                Vector3 pos = _editNickname.transform.position;
-                pos.y = _playerList[i].transform.position.y;
-                _editNickname.transform.position = pos;
+                _playerList[i].transform.parent.gameObject.SetActive(true);
+                _playerList[i].text = _nicknames[i].nickname.ToString();
+
+                if ( _nicknames[i].clientId == NetworkManager.Singleton.LocalClientId )
+                {
+                    Debug.Log("Setting edit button postion");
+                    Vector3 pos = _editNickname.transform.position;
+                    pos.y = _playerList[i].transform.position.y;
+                    _editNickname.transform.position = pos;
+                }
             }
+            else if ( _playerList[i].transform.parent.gameObject.activeSelf )
+                _playerList[i].transform.parent.gameObject.SetActive(false);
         }
     }
 
@@ -141,7 +176,7 @@ public class SessionStart : NetworkBehaviour
     {
         if ( ! IsServer ) return; // the init on OnNetworkSpawn should block the usage of add and remove from anyone other than host but prevent.
 
-        NetworkNickname nickname = new() { clientId = playerID };
+        NetworkNickname nickname = new() { clientId = playerID, nickname = playerID.ToString() };
         _nicknames.Add(nickname);
 
         Debug.Log("host? Added new player: " + playerID + " nick count now: " + _nicknames.Count);

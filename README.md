@@ -206,7 +206,7 @@ The client credentials however had to be put away in a json, hidden by GitIgnore
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
-[![Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://img.youtube.com/vi/Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG/0.jpg)](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)
+[![Diogo Andrade - Sistemas de Redes para Jogos - Aula 19/05/2025](https://i.ytimg.com/vi/Ql9hg1mvBRM/hqdefault.jpg?sqp=-oaymwFACKgBEF5IWvKriqkDMwgBFQAAiEIYAdgBAeIBCggYEAIYBjgBQAHwAQH4Af4JgALQBYoCDAgAEAEYXCBcKFwwDw==&rs=AOn4CLAGp780tLaDn27SAOq9K0UOuXD9Cg)](https://www.youtube.com/watch?v=Ql9hg1mvBRM&list=PLheBz0T_uVP3JaTA4wMs38MgOKiIpDpLG)
 
 Relay servers, means that rather than hosting game worlds themselves, relay servers only provide the connections between players, which means they can serve many sessions at once, some relay servers like Steam's and PSN provide methods of authentication but we will only need anonymous users.
 
@@ -266,17 +266,15 @@ The session lobby is managed by the `SessionStart` script. At first, all players
 
 Nicknames are shared across all players using a `NetworkList`, which is owned and modified only by the host. Clients cannot modify the list directly but must send a request to the host instead containing the nick string and their client ID.
 
-Since I couldn’t rely on each client to detect new connections and add entries themselves as they could add each other multiple times, I created a server RPC method, `SetNicknameServerRpc`, which updates the nickname associated with a given `clientId` when requested. Each client has a confirm button tied to `UpdatePlayerNickname`, which sends this request to the server. Once the nickname is updated in the list, the `OnListChanged` event is triggered, which all clients listen to in order to refresh their UI.
-
 At first, I had issues with the nickname list not being initialized properly. Even though I was assigning it in `Awake()`, I kept getting null reference errors and `OnListChanged` was not firing. After some research and testing, I realized that this was happening because `Start()` was running before the `NetworkObject` was fully initialized, and as a result of initializing the list before `NetworkObject` it became null again when it finally searched for network variables to sync.
 
 To fix this, I moved all network-related logic into one of `NetworkBehavior`s methods, `OnNetworkSpawn()`, that is guaranteed to run only after the network object is setup.
 
 I found this behavior explained and confirmed in this video:
 
-[![Multiplayer Setup in Unity NGO - OnNetworkSpawn](https://img.youtube.com/vi/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587/0.jpg)](https://youtu.be/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587)
+[Multiplayer Setup in Unity NGO - OnNetworkSpawn](https://youtu.be/YmUnXsOp_t0?si=Rhw4YgKmYYqXap2E&t=4587)
 
-[![Multiplayer Setup in Unity NGO - NetworkVariable](https://img.youtube.com/vi/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374/0.jpg)](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)
+[Multiplayer Setup in Unity NGO - NetworkVariable](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)
 
 ##### Scene Management
 
@@ -285,6 +283,14 @@ However, even after this, changes to the nickname list were still not being shar
 [Unity Forum - Scene object with NetworkObject disappears on client](https://discussions.unity.com/t/scene-object-with-networkobject-disappears-on-client/939204)
 
 So I enabled Scene Management in the `NetworkManager` and started using `NetworkManager.Singleton.SceneManager.LoadScene()` to transition between scenes instead of directly with `SceneManager`, so it knows to find and synchronize scene spawned objects across all clients during scene loading.
+
+##### Setting Nicks
+
+Since I couldn’t rely on each client to detect new connections and add entries themselves as they could add each other multiple times, I first created a server RPC method, `SetNicknameServerRpc`, which theoretically would update the nickname associated with a given `clientId` when requested.
+
+Each client has a confirm button tied to `UpdatePlayerNickname`, which sends this request to the server. Once the nickname is updated in the list, the `OnListChanged` event is triggered, which all clients listen to in order to refresh their UI.
+
+However, I discovered that the server or host client can't call a Server RPC, but since I cannot allow clients to have write permission on the list directly, I had to separate `SetNicknameServerRpc` into `SetNickname` method so if the calling client is the server, it can skip RPC and directly modify the list. The new method is responsible for actually modifying the list and to invoke `OnListChanged` event, and notify all clients, while the `SetNicknameServerRpc` is now only used for regular clients to tell the server to use `SetNickname`.
 
 ### Conclusions
 
