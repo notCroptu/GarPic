@@ -14,6 +14,8 @@ public class PhotoTaking : GameState
     private WebCamTexture _webcamTexture;
     [SerializeField] private Texture2D _nullTexture;
 
+    private NetworkSetup _networkSetup;
+
     private byte[] _imageBytes;
     private Texture2D _photo;
 
@@ -109,7 +111,7 @@ public class PhotoTaking : GameState
             #endif
         }
 
-        string fileName = $"{NetworkManager.ServerClientId}/{NetworkManager.Singleton.LocalClientId}/photo_{_gameloop.Round}.png";
+        string fileName = $"{NetworkManager.ServerClientId}/{_networkSetup.NetworkManager.LocalClientId}/photo_{_gameloop.Round}.png";
         string url = $"{LoadSupabaseConfig.Config.supabaseURL}/storage/v1/object/{LoadSupabaseConfig.Config.supabaseBUCKET}/{fileName}";
 
         Debug.Log("PhotoTaking url: "  + url);

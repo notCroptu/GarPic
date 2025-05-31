@@ -236,15 +236,17 @@ Then another Task, `CreateAllocationData`, calls the service again to create a n
 
 Using one of the settings of the `RelayHostData` object, the allocation ID, I can call a final task `GetJoinCodeAsync`, to retrieve the session code for players to join with.
 
-After this the player is sent into the game scene where they may wait for at least 3 players to join, after which the host can start the game, and then the game logic is initialized and all clients synchronize to the main game scene.
+We run `StartHost()` to initialize the client as host and start relaying, and after this the player is sent into the game scene.
+
+In the game scene, the host may wait for at least 3 players to join, after which they alone can start the game, and then the game loop logic is initialized and all clients synchronize to the main game scene.
 
 #### Client Setup
 
 Players who want to join a an existing session act as clients connect through the Unity Relay server using the session code provided by the host.
 
-Upon inserting this code one the Join button on teh lobby, the code is sent to the Relay service to find and join the correct allocation through the `JoinAllocationAsync` task.
+Upon inserting this code one the Join button on the lobby, the code is sent to the Relay service to find and join the correct allocation through the `JoinAllocationAsync` task.
 
-Once connected, the client’s state the game state is ready to be synchronized with the host.
+Once allocated, we need to set client relay data for `UnityTransport` using `SetClientRelayData`. Once that's done we can't forget to `StartClient()`, and after that the client’s state the game state is ready to be auto synchronized with the host.
 
 #### Error Handling
 
@@ -282,7 +284,7 @@ However, even after this, changes to the nickname list were still not being shar
 
 [Unity Forum - Scene object with NetworkObject disappears on client](https://discussions.unity.com/t/scene-object-with-networkobject-disappears-on-client/939204)
 
-So I enabled Scene Management in the `NetworkManager` and started using `NetworkManager.Singleton.SceneManager.LoadScene()` to transition between scenes instead of directly with `SceneManager`, so it knows to find and synchronize scene spawned objects across all clients during scene loading.
+So I enabled Scene Management in the `NetworkManager` and started using `NetworkManager.SceneManager.LoadScene()` to transition between scenes instead of directly with `SceneManager`, so it knows to find and synchronize scene spawned objects across all clients during scene loading.
 
 ##### Setting Nicks
 

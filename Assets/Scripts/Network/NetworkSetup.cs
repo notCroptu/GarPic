@@ -7,7 +7,6 @@ using System.Diagnostics;
 using UnityEditor;
 using System.IO;
 using System.Linq;
-using System.Collections.Generic;
 using Unity.Services.Core;
 using Unity.Services.Authentication;
 using System.Threading.Tasks;
@@ -15,12 +14,8 @@ using Unity.Services.Relay.Models;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-
-
 #if UNITY_EDITOR
 using UnityEditor.Build.Reporting;
-using UnityEditor.PackageManager;
-
 #endif
 
 #if UNITY_STANDALONE_WIN
@@ -30,7 +25,7 @@ using System.Runtime.InteropServices;
 public class NetworkSetup : MonoBehaviour
 {
     [SerializeField] private UnityTransport _transport;
-    [SerializeField] private NetworkManager _networkManager;
+    [field:SerializeField] public NetworkManager NetworkManager { get; private set; }
     [SerializeField] private int _maxPlayers;
     [SerializeField] private string _gameScene = "GameScene";
     public bool IsRelay { get; private set; } = false;
@@ -43,12 +38,13 @@ public class NetworkSetup : MonoBehaviour
     public void StartServer()
     {
         IsServer = true;
+        // UnityEngine.Debug.Log("Start server. IsServer: " + NetworkManager.IsServer + " IsHost: " + NetworkManager.IsHost);
         StartCoroutine(StartAsServerCR());
     }
     public void StartClient(string code)
     {
         SessionCode = code;
-        UnityEngine.Debug.Log("Session code is now: " + code + " c: " + code.Length);
+        // UnityEngine.Debug.Log("Start client. Session code is now: " + code + " c: " + code.Length + " IsServer: " + NetworkManager.IsServer + " IsHost: " + NetworkManager.IsHost);
         StartCoroutine(StartAsClientCR());
     }
 
@@ -56,7 +52,7 @@ public class NetworkSetup : MonoBehaviour
     [SerializeField] private Image _image;
     private void Update()
     {
-        if ( NetworkManager.Singleton != null && IsServer)
+        if ( NetworkManager != null && IsServer)
             _image.color = Color.green;
         else
             _image.color = Color.red;
@@ -65,15 +61,15 @@ public class NetworkSetup : MonoBehaviour
     private void StartGame()
     {
         // SceneManager.LoadSceneAsync(_gameScene);
-        NetworkManager.Singleton.SceneManager.LoadScene(_gameScene, LoadSceneMode.Single);
+        NetworkManager.SceneManager.LoadScene(_gameScene, LoadSceneMode.Single);
     }
     private void Start()
     {
         if ( _transport == null )
             _transport = GetComponent<UnityTransport>();
 
-        if ( _networkManager == null )
-            _networkManager = GetComponent<NetworkManager>();
+        if ( NetworkManager == null )
+            NetworkManager = GetComponent<NetworkManager>();
     
         if ( _transport.Protocol == UnityTransport.ProtocolType.RelayUnityTransport )
             IsRelay = true;
@@ -81,11 +77,11 @@ public class NetworkSetup : MonoBehaviour
 
     private IEnumerator StartAsServerCR()
     {
-        _networkManager.enabled = true;
+        NetworkManager.enabled = true;
         _transport.enabled = true;
 
-        NetworkManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        NetworkManager.Singleton.OnClientDisconnectCallback += OnClientDisconnected;
+        NetworkManager.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
 
         // Wait a frame for setups to be done
         yield return null;
@@ -160,7 +156,21 @@ public class NetworkSetup : MonoBehaviour
             }
 
             UnityEngine.Debug.Log("Login successful. ");
-            NetworkManager.Singleton.StartServer();
+            NetworkManager.StartHost();
+
+            float timeout = 10f;
+            while ( ! NetworkManager.IsHost && timeout > 0f )
+            {
+                timeout -= Time.deltaTime;
+                yield return null;
+            }
+
+            if ( ! NetworkManager.IsHost )
+            {
+                OnError.Invoke("Could not start server in time. ");
+                yield break;
+            }
+            
             StartGame();
         }
     }
@@ -224,21 +234,21 @@ public class NetworkSetup : MonoBehaviour
 
     private void OnClientConnected(ulong clientId)
     {
-        if ( ! NetworkManager.Singleton.IsServer ) return;
+        if ( ! NetworkManager.IsServer ) return;
 
         UnityEngine.Debug.Log($"Player {clientId} connected!");
     }
 
     private void OnClientDisconnected(ulong clientId)
     {
-        if ( ! NetworkManager.Singleton.IsServer ) return;
+        if ( ! NetworkManager.IsServer ) return;
 
         UnityEngine.Debug.Log($"Player {clientId} disconnected!");
     }
 
     private IEnumerator StartAsClientCR()
     {
-        _networkManager.enabled = true;
+        NetworkManager.enabled = true;
         _transport.enabled = true;
         // Wait a frame for setups to be done
         yield return null;
@@ -285,16 +295,34 @@ public class NetworkSetup : MonoBehaviour
                 _relayData.HostConnectionData = allocation.HostConnectionData;
                 _relayData.Key = allocation.Key;
 
-                _transport.SetRelayServerData(
+                _transport.SetClientRelayData(
                     _relayData.IPv4Address,
                     _relayData.Port,
                     _relayData.AllocationIDBytes,
                     _relayData.Key,
-                    _relayData.ConnectionData);
+                    _relayData.ConnectionData,
+                    _relayData.HostConnectionData);
             }
 
             UnityEngine.Debug.Log("Login successful! ");
-            StartGame();
+            NetworkManager.StartClient();
+
+            UnityEngine.Debug.Log("Login IsServer: " + NetworkManager.IsServer + " IsHost: " + NetworkManager.IsHost);
+
+            float timeout = 10f;
+            while ( ! NetworkManager.IsConnectedClient && timeout > 0f )
+            {
+                timeout -= Time.deltaTime;
+                yield return null;
+            }
+
+            if ( ! NetworkManager.IsConnectedClient )
+            {
+                OnError.Invoke("Could not join server in time. ");
+                // yield break;
+            }
+
+            // StartGame();
         }
     }
 

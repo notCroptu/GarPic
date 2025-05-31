@@ -47,13 +47,16 @@ public class SessionStart : NetworkBehaviour
 
         base.OnNetworkSpawn();
 
+        _networkSetup = FindFirstObjectByType<NetworkSetup>();
+        _sessionCode.text = _networkSetup.SessionCode;
+
         /* _nicknames ??= new NetworkList<NetworkNickname>(
                 new List<NetworkNickname>(),
                 NetworkVariableReadPermission.Everyone,
                 NetworkVariableWritePermission.Server
             );*/
         _nicknames.OnListChanged += UpdatePlayerList;
-        _InputField.text = NetworkManager.Singleton.LocalClientId.ToString();
+        _InputField.text = _networkSetup.NetworkManager.LocalClientId.ToString();
 
         if ( IsHost || IsServer )
         {
@@ -63,10 +66,10 @@ public class SessionStart : NetworkBehaviour
             _startGame.onClick.AddListener(OnStart);
             _startGame.onClick.AddListener(_gameLoop.StartGame);
 
-            NetworkManager.Singleton.OnClientConnectedCallback += AddPlayer;
-            NetworkManager.Singleton.OnClientDisconnectCallback += RemovePlayer;
+            _networkSetup.NetworkManager.OnClientConnectedCallback += AddPlayer;
+            _networkSetup.NetworkManager.OnClientDisconnectCallback += RemovePlayer;
 
-            AddPlayer(NetworkManager.Singleton.LocalClientId);
+            AddPlayer(_networkSetup.NetworkManager.LocalClientId);
         }
         else
         {
@@ -88,9 +91,6 @@ public class SessionStart : NetworkBehaviour
     private void Start()
     {
         _canvas.SetActive(true);
-
-        _networkSetup = FindFirstObjectByType<NetworkSetup>();
-        _sessionCode.text = _networkSetup.SessionCode;
     }
 
     /// <summary>
@@ -98,14 +98,14 @@ public class SessionStart : NetworkBehaviour
     /// </summary>
     public void UpdatePlayerNickname()
     {
-        ulong clientId = NetworkManager.Singleton.LocalClientId;
+        ulong clientId = _networkSetup.NetworkManager.LocalClientId;
         string newNickname = _InputField.text;
 
         // Prevent spamming the done button
         if (FindNickname(clientId).nickname == newNickname)
             return;
 
-        Debug.Log("host? " + (IsServer || IsHost) + " Starting set nick from: " + NetworkManager.Singleton.LocalClientId + " new nick: " + _InputField.text);
+        Debug.Log("host? " + (IsServer || IsHost) + " Starting set nick from: " + _networkSetup.NetworkManager.LocalClientId + " new nick: " + _InputField.text);
 
         if (IsServer)
             SetNickname(clientId, newNickname);
@@ -154,7 +154,7 @@ public class SessionStart : NetworkBehaviour
                 _playerList[i].transform.parent.gameObject.SetActive(true);
                 _playerList[i].text = _nicknames[i].nickname.ToString();
 
-                if ( _nicknames[i].clientId == NetworkManager.Singleton.LocalClientId )
+                if ( _nicknames[i].clientId == _networkSetup.NetworkManager.LocalClientId )
                 {
                     Debug.Log("Setting edit button postion");
                     Vector3 pos = _editNickname.transform.position;
@@ -226,10 +226,10 @@ public class SessionStart : NetworkBehaviour
 
     private void OnDisable()
     {
-        if (NetworkManager.Singleton != null && IsHost )
+        if (_networkSetup.NetworkManager != null && IsHost )
         {
-            NetworkManager.Singleton.OnClientConnectedCallback -= AddPlayer;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= RemovePlayer;
+            _networkSetup.NetworkManager.OnClientConnectedCallback -= AddPlayer;
+            _networkSetup.NetworkManager.OnClientDisconnectCallback -= RemovePlayer;
         }
     }
 }
