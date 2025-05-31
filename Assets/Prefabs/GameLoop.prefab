@@ -14,7 +14,7 @@ GameObject:
   - component: {fileID: 2741938763769201153}
   - component: {fileID: 3566116113246036621}
   - component: {fileID: 3532032233043547889}
-  - component: {fileID: 7201531463812512655}
+  - component: {fileID: 5486100186556008137}
   m_Layer: 0
   m_Name: GameLoop
   m_TagString: Untagged
@@ -49,18 +49,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1654268713
-  InScenePlacedSourceGlobalObjectIdHash: 0
+  GlobalObjectIdHash: 2807046547
+  InScenePlacedSourceGlobalObjectIdHash: 2688904072
   DeferredDespawnTick: 0
   Ownership: 1
   AlwaysReplicateAsRoot: 0
-  SynchronizeTransform: 1
+  SynchronizeTransform: 0
   ActiveSceneSynchronization: 0
   SceneMigrationSynchronization: 0
   SpawnWithObservers: 1
   DontDestroyWithOwner: 0
   AutoObjectParentSync: 1
-  SyncOwnerTransformWhenParented: 1
+  SyncOwnerTransformWhenParented: 0
   AllowOwnerToParent: 0
 --- !u!114 &1266433401796896034
 MonoBehaviour:
@@ -74,10 +74,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6207489ccaadf8c4aa1cd28741aacd51, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   _states:
   - {fileID: 3566116113246036621}
   - {fileID: 3532032233043547889}
-  _gameRounds: 0
+  _gameRounds: 8
 --- !u!114 &2741938763769201153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95,7 +96,7 @@ MonoBehaviour:
   _startGame: {fileID: 0}
   _canvas: {fileID: 0}
   _gameLoop: {fileID: 1266433401796896034}
-  _playerList:
+  <PlayerList>k__BackingField:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
@@ -118,8 +119,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 175b837f3df4cd44b8147d5caaf23249, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Word>k__BackingField: 
-  _word: {fileID: 0}
+  ShowTopMostFoldoutHeaderGroup: 1
+  _wordTMP: {fileID: 0}
+  _timerTMP: {fileID: 0}
   _canvas: {fileID: 0}
 --- !u!114 &3532032233043547889
 MonoBehaviour:
@@ -133,13 +135,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a5895b182e71dd0479d41bdf26486f1d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   _gameloop: {fileID: 1266433401796896034}
   _display: {fileID: 0}
   _takePhoto: {fileID: 0}
   _canvas: {fileID: 0}
-  _timer: {fileID: 7201531463812512655}
+  _gpsTimerPrefab: {fileID: 0}
   _nullTexture: {fileID: 2800000, guid: f08672ff521b92541b8001beac4518de, type: 3}
---- !u!114 &7201531463812512655
+--- !u!114 &5486100186556008137
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -148,8 +151,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 7903454958936054629}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 443985ed62234294c97fd1abb1a40855, type: 3}
+  m_Script: {fileID: 11500000, guid: 796cda2c66f12ca47a6f9bfb882de3dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _baseRunTime: 2
-  _text: {fileID: 0}
+  _timerList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _sessionStart: {fileID: 2741938763769201153}

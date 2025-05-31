@@ -13,7 +13,7 @@ public class SessionStart : NetworkBehaviour
     [SerializeField] private Button _startGame;
     [SerializeField] private GameObject _canvas;
     [SerializeField] private GameLoop _gameLoop;
-    [SerializeField] private TMP_Text[] _playerList;
+    [field:SerializeField] public TMP_Text[] PlayerList { get; private set; }
     [SerializeField] private Button _editNickname;
     [SerializeField] private TMP_InputField _InputField;
 
@@ -101,7 +101,7 @@ public class SessionStart : NetworkBehaviour
         string newNickname = _InputField.text;
 
         // Prevent spamming the done button
-        if (FindNickname(clientId).nickname == newNickname)
+        if ( FindNickname(clientId) == newNickname )
             return;
 
         Debug.Log("host? " + (IsServer || IsHost) + " Starting set nick from: " + _networkSetup.NetworkManager.LocalClientId + " new nick: " + _InputField.text);
@@ -146,23 +146,23 @@ public class SessionStart : NetworkBehaviour
     {
         Debug.Log("Nicknames OnDeltaListChanged: " + change.Type);
         
-        for ( int i = 0 ; i < _playerList.Length ; i++ )
+        for ( int i = 0 ; i < PlayerList.Length ; i++ )
         {
             if ( i < _nicknames.Count )
             {
-                _playerList[i].transform.parent.gameObject.SetActive(true);
-                _playerList[i].text = _nicknames[i].nickname.ToString();
+                PlayerList[i].transform.parent.gameObject.SetActive(true);
+                PlayerList[i].text = _nicknames[i].nickname.ToString();
 
                 if ( _nicknames[i].clientId == _networkSetup.NetworkManager.LocalClientId )
                 {
                     Debug.Log("Setting edit button postion");
                     Vector3 pos = _editNickname.transform.position;
-                    pos.y = _playerList[i].transform.position.y;
+                    pos.y = PlayerList[i].transform.position.y;
                     _editNickname.transform.position = pos;
                 }
             }
-            else if ( _playerList[i].transform.parent.gameObject.activeSelf )
-                _playerList[i].transform.parent.gameObject.SetActive(false);
+            else if ( PlayerList[i].transform.parent.gameObject.activeSelf )
+                PlayerList[i].transform.parent.gameObject.SetActive(false);
         }
     }
 
@@ -209,11 +209,11 @@ public class SessionStart : NetworkBehaviour
         _startGame.interactable = currentPlayers >= 1; // 1 phones for now, should be 3
     }
 
-    public NetworkNickname FindNickname(ulong clientId)
+    public string FindNickname(ulong clientId)
     {
         foreach ( NetworkNickname client in _nicknames )
             if ( client.clientId == clientId )
-                return client;
+                return client.nickname.ToString();
         
         return default;
     }
@@ -227,7 +227,8 @@ public class SessionStart : NetworkBehaviour
     [ClientRpc]
     public void DisableSessionLobbyClientRpc()
     {
-        _canvas.SetActive(false);
+        _sessionCode.gameObject.SetActive(false);
+        _startGame.gameObject.SetActive(false);
     }
 
     private void OnDisable()

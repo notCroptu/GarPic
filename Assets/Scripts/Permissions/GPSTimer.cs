@@ -1,13 +1,22 @@
 using System.Collections;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 
-public class GPSTimer : MonoBehaviour
+public class GPSTimer : NetworkBehaviour
 {
     [SerializeField] private float _baseRunTime = 20f;
     [SerializeField] private TMP_Text _text;
     private float _runTime;
     private bool _GPSsuccess = false;
+
+    public NetworkVariable<ulong> Timer => _timer;
+    private NetworkVariable<ulong> _timer = new NetworkVariable<ulong>(
+        default,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Owner
+    );
+
     private void Start()
     {
         StartCoroutine( StartGPS() );
@@ -96,10 +105,13 @@ public class GPSTimer : MonoBehaviour
         while ( _runTime > 0 )
         {
             Debug.Log("Running Moving and input location is: " + Input.location.isEnabledByUser);
+
             if ( _GPSsuccess )
                 yield return waitTillNotMoving;
 
             _runTime -= Time.deltaTime;
+            _timer.Value = (ulong)_runTime;
+            
             yield return null;
 
             _text.text = _runTime.ToString();

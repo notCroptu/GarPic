@@ -1,4 +1,6 @@
+using System;
 using System.Collections;
+using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -10,12 +12,28 @@ public class PhotoTaking : GameState
     [SerializeField] private RawImage _display;
     [SerializeField] private Button _takePhoto;
     [SerializeField] private GameObject _canvas;
-    [SerializeField] private GPSTimer _timer;
+    [SerializeField] private GameObject _gpsTimerPrefab;
+    private GPSTimer _timer;
     private WebCamTexture _webcamTexture;
     [SerializeField] private Texture2D _nullTexture;
 
     private byte[] _imageBytes;
     private Texture2D _photo;
+    private HashSet<ulong> _doneClients;
+
+    public override void OnNetworkSpawn()
+    {
+        Debug.Log("PhotoTaking OnNetworkSpawn IsServer: " + IsServer );
+
+        base.OnNetworkSpawn();
+
+        GameObject TimerObj = Instantiate(_gpsTimerPrefab);
+
+        TimerObj.GetComponent<NetworkObject>()
+            .SpawnWithOwnership(_networkSetup.NetworkManager.LocalClientId);
+
+        _timer = TimerObj.GetComponent<GPSTimer>();
+    }
 
     private IEnumerator DelayedCameraInitialization()
     {
@@ -68,10 +86,41 @@ public class PhotoTaking : GameState
         _photo.SetPixels32(_webcamTexture.GetPixels32());
         _photo.Apply();
         _imageBytes = _photo.EncodeToPNG();
+
+        _canvas.SetActive(false);
     }
+
 
     public override IEnumerator State()
     {
+        _doneClients = new HashSet<ulong>();
+
+        yield return base.State();
+
+        Debug.Log("Server started PhotoTaking. ");
+
+        ClientStateClientRpc();
+        yield return new WaitUntil( () => AllClientsDone() );
+    }
+
+    [ClientRpc]
+    public void ClientStateClientRpc()
+    {
+        StartCoroutine(ClientStateCoroutine());
+    }
+
+    private bool AllClientsDone()
+    {
+        foreach ( ulong clientID in _networkSetup.NetworkManager.ConnectedClientsIds )
+            if ( ! _doneClients.Contains(clientID) )
+                return false;
+        return true;
+    }
+
+    public IEnumerator ClientStateCoroutine()
+    {
+        Debug.Log("Client started PhotoTaking. ");
+
         _canvas.SetActive(true);
         _takePhoto.gameObject.SetActive(true);
 
@@ -82,13 +131,25 @@ public class PhotoTaking : GameState
 
         _takePhoto.gameObject.SetActive(false);
         _webcamTexture.Stop();
+        yield return null;
         _display.texture = _photo;
 
         yield return UploadPhoto();
+
+        if ( IsHost || IsServer )
+            _doneClients.Add(_networkSetup.NetworkManager.LocalClientId);
+        else
+            ClientDoneServerRpc();
         
         _canvas.SetActive(false);
         _imageBytes = null;
         _photo = null;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void ClientDoneServerRpc(ServerRpcParams rpcParams = default)
+    {
+        _doneClients.Add(rpcParams.Receive.SenderClientId);
     }
 
     public IEnumerator UploadPhoto()

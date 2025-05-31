@@ -308,6 +308,30 @@ The goal is that each `GameState` holds `NetworkVariable`s and uses RPCs to trig
 
 Word Selection is the first game state in the loop and includes a `NetworkVariable` for the word that players must take pictures of, and a timer value that tells players how long they have to prepare.
 
+#### PhotoTaking
+
+Since the photo taking phase involves only individual players capturing their own photos, there is no need for them to share information with each other during this state. Because of this, the server's only responsibility was to wait until all clients reported that they had finished taking a photo.
+
+The timer for this phase is not enforced by the server, as it can vary between players due to the GPS timer feature, and seemed to be the best way of making sure each player has a fair and consistent timer duration.
+
+To handle this, the server uses a `ClientRpc` called `ClientStateClientRpc` to instruct all clients to start their own photo taking coroutine that runs a countdown timer that can be interrupted by GPS conditions, and when it finishes, the client uploads the captured photo to the previously configured Supabase bucket.
+
+After the upload, the client calls a `ServerRpc` named `ClientDoneServerRpc` to notify the server that it has completed the task, upon which the server adds that client’s ID to a local `HashSet` of completed client IDs. The main game state coroutine, controlled by the server, continues to wait until all currently connected clients id's have been added to the `HashSet`.
+
+Once a client finishes, it hides the state canvas and shows the player list UI from `Session Start` again, where the player can see other players' timers updating in real time.
+
+After everyone's reports as finished, the server moves on to the next state.
+
+##### GPSTimer
+
+This real-time sync is handled using the `GPSTimer`, which I initially thought of using with a `NetworkList`  to hold corresponding clientIDs and Timers ulong, following the same implementation logic as `Session Start`'s nickname `NetworkList`.
+
+However, I changed it to use a `NetworkVariable`, as I needed all clients to own their own timers, and sending ServerRPCs every second for 8 clients to server and then black to other clients just to store those already existing variables in a new list seemed unnecessary.
+
+So using individual `NetworkVariable`s allowed me to let each player own and update their own timer value directly, without needing to send that `ServerRpc`, and syncing only when the value changes, and avoiding other issues that might be associated with `NetworkList` indexing, to hopefully reduce the weight of this part of the network.
+
+With this I also to created a separate viewer for it, `TimerDisplay` that would run inside the GameLoop scene spawned object, while `GPSTimer` became an instantiated `NetworkObject` in it's own prefab, so I would be able to use `FindObjectsByType()` to find the synchronized objects from which to collect the timer data.
+
 ### Conclusions
 
 DontDestroyWithOwner for switching host in case of disconnect?
