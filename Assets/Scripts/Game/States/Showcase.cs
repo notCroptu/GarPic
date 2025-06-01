@@ -34,18 +34,23 @@ public class Showcase : GameState
     private void Start()
     {
         _canvas.SetActive(false);
-        RoundPictures = new();
     }
 
     public override IEnumerator State()
     {
         yield return base.State();
 
+        ResetDicClientRpc();
+
         foreach ( ulong id in _networkSetup.NetworkManager.ConnectedClientsIds)
         {
             // server checks which players took a photo with supa
 
+            Debug.Log("Attempting to head id: " + id);
+
             string url = BuildPhotoUrl(id);
+
+            Debug.Log("Showcase url: "  + url);
 
             // iterates through them, tells the clients to find that photo and show it and the player nickname
 
@@ -106,6 +111,13 @@ public class Showcase : GameState
         StartCoroutine(UpdatePicture(clientId));
     }
 
+    [ClientRpc]
+    public void ResetDicClientRpc()
+    {
+        RoundPictures = new();
+    }
+
+
     private IEnumerator UpdatePicture(ulong clientId)
     {
         if ( !_canvas.activeSelf )
@@ -149,7 +161,6 @@ public class Showcase : GameState
         if ( !success || data == null )
         {
             Debug.Log("Failed to download photo for: " + clientId);
-            _display.texture = _nullTexture;
             yield break;
         }
 
@@ -158,14 +169,15 @@ public class Showcase : GameState
         if ( !photo.LoadImage(data) )
         {
             Debug.Log("Failed to decode downloaded image for: " + clientId);
-            _display.texture = _nullTexture;
             yield break;
         }
 
         Debug.Log("done getting photo for : " + clientId);
-
-        _display.texture = photo;
+        
         RoundPictures[clientId] = photo;
+        _display.texture = RoundPictures[clientId];
+
+        Debug.Log("Showcase saved photo to RoundPictures for " + clientId);
     }
 
     private void UpdateTimer()

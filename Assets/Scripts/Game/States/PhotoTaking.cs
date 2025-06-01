@@ -103,17 +103,18 @@ public class PhotoTaking : GameState
         if ( _imageBytes == null )
         {
             _imageBytes = _nullTexture.EncodeToPNG();
-            return;    
+        }
+        #elif UNITY_ANDROID
+        if ( _webcamTexture != null && _webcamTexture.isPlaying )
+        {
+            _photo = new Texture2D(_webcamTexture.width, _webcamTexture.height);
+            _photo.SetPixels32(_webcamTexture.GetPixels32());
+            _photo.Apply();
+            _imageBytes = _photo.EncodeToPNG();
         }
         #endif
 
-        if ( _webcamTexture == null || !_webcamTexture.isPlaying )
-            return;
-
-        _photo = new Texture2D(_webcamTexture.width, _webcamTexture.height);
-        _photo.SetPixels32(_webcamTexture.GetPixels32());
-        _photo.Apply();
-        _imageBytes = _photo.EncodeToPNG();
+        Debug.Log("PhotoTaking image bytes set: " + _imageBytes != null);
 
         _canvas.SetActive(false);
         _timer.StopCoroutine();

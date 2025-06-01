@@ -97,20 +97,26 @@ public class Voting : GameState
         foreach(GameObject o in _goList)
             o.SetActive(false);
 
-        int i = 0;
+        Debug.Log("Voting started pic setup from RoundPictures: " + _showcase.RoundPictures.Count);
+
+        int i = -1;
 
         foreach( KeyValuePair<ulong, Texture2D> pic in _showcase.RoundPictures )
         {
+            Debug.Log("Trying to load photo to RoundPictures for " + pic.Key + " texture exists: " + (pic.Value != null) );
+
+            i++;
+
             if ( pic.Key == _networkSetup.NetworkManager.LocalClientId ) // don't let player vote on themselves
                 continue;
+
+            Debug.Log("Voting loaded photo to RoundPictures for " + pic.Key + " texture exists: " + (pic.Value != null) );
             
             _nickList[i].text = _sessionStart.FindNickname(pic.Key);
             _imageList[i].texture = pic.Value;
             _buttonList[i].onClick.AddListener(() =>
                 Vote(pic.Key, _networkSetup.NetworkManager.LocalClientId));
             _goList[i].SetActive(true);
-
-            i++;
         }
 
         _canvas.SetActive(true);
