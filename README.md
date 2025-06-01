@@ -91,7 +91,7 @@ After this, on connecting the Android phone via USB to the computer running the 
 
 #### Build, Install and Launch (.bat)
 
-However, this setup only serves a way to debug input and rendering, and wouldn't reflect the device performance since it's still running from the editor, and some device inputs might still need to be built onto a mobile phone to reliable test them.
+However, this setup only serves a way to debug input and rendering, and wouldn't reflect the device performance since it's still running from the editor, and some device inputs might still need to be built onto a mobile phone to reliably test them.
 
 [Unity Remote 5](https://docs.unity3d.com/Manual/UnityRemote5.html)
 
@@ -326,11 +326,13 @@ After everyone's reports as finished, the server moves on to the next state.
 
 This real-time sync is handled using the `GPSTimer`, which I initially thought of using with a `NetworkList`  to hold corresponding clientIDs and Timers ulong, following the same implementation logic as `Session Start`'s nickname `NetworkList`.
 
-However, I changed it to use a `NetworkVariable`, as I needed all clients to own their own timers, and sending ServerRPCs every second for 8 clients to server and then black to other clients just to store those already existing variables in a new list seemed unnecessary.
+However, I changed it to use a `NetworkVariable`, as I needed all clients to own their own timers, and sending ServerRPCs every second for 8 clients to server and then back to other clients just to store those already existing variables in a new list seemed unnecessary.
 
-So using individual `NetworkVariable`s allowed me to let each player own and update their own timer value directly, without needing to send that `ServerRpc`, and syncing only when the value changes, and avoiding other issues that might be associated with `NetworkList` indexing, to hopefully reduce the weight of this part of the network.
+So using individual `NetworkVariable`s allowed me to let each player own and update their own timer value directly, without needing to send that `ServerRpc`, syncing only when the value changes, and avoiding other issues that might be associated with `NetworkList` indexing, to hopefully reduce the weight of this part of the network.
 
-With this I also to created a separate viewer for it, `TimerDisplay` that would run inside the GameLoop scene spawned object, while `GPSTimer` became an instantiated `NetworkObject` in it's own prefab, so I would be able to use `FindObjectsByType()` to find the synchronized objects from which to collect the timer data.
+With this I also to created a separate viewer for it, `TimerDisplay` that would run inside the GameLoop scene spawned object, while `GPSTimer` became an instantiated `NetworkObject` in it's own prefab spawned by the server, so I would be able to use `FindObjectsByType()` to find the synchronized objects from which to collect the timer data.
+
+#### Showcase
 
 ### Conclusions
 

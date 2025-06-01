@@ -24,6 +24,8 @@ public class SessionStart : NetworkBehaviour
             );
     private NetworkSetup _networkSetup;
 
+    public Action UpdateList;
+
     public struct NetworkNickname : INetworkSerializable, IEquatable<NetworkNickname>
     {
         public ulong clientId;
@@ -164,6 +166,8 @@ public class SessionStart : NetworkBehaviour
             else if ( PlayerList[i].transform.parent.gameObject.activeSelf )
                 PlayerList[i].transform.parent.gameObject.SetActive(false);
         }
+
+        UpdateList?.Invoke();
     }
 
     // the 3 next methods ar only available for host

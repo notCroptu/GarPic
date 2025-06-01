@@ -8,6 +8,7 @@ public class TimerDisplay : NetworkBehaviour
 {
     [SerializeField] private TMP_Text[] _timerList;
     [SerializeField] private SessionStart _sessionStart;
+    [field:SerializeField] public TMP_Text TimeText { get; private set; }
 
     private List<GPSTimer> _playerTimers;
     private Dictionary<ulong, int> _clientToIndex;
@@ -17,13 +18,14 @@ public class TimerDisplay : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        _sessionStart.UpdateList += UpdateList;
         
         _playerTimers = new();
         _clientToIndex = new();
 
         _networkManager = FindFirstObjectByType<NetworkManager>();
 
-        _networkManager.OnClientConnectedCallback += AddPlayer;
         _networkManager.OnClientDisconnectCallback += RemovePlayer;
 
         StartCoroutine(AfterSpawnCoroutine());
@@ -45,7 +47,7 @@ public class TimerDisplay : NetworkBehaviour
             ulong clientId = playerTimer.OwnerClientId;
 
             if ( _clientToIndex.TryGetValue(clientId, out int i ))
-                _timerList[i].text = playerTimer.Timer.Value.ToString("F1");
+                _timerList[i].text = playerTimer.Timer.ToString();
         }
     }
 
@@ -83,14 +85,53 @@ public class TimerDisplay : NetworkBehaviour
         }
     }
 
-    private void AddPlayer(ulong _)
+    public void AddPlayer(GPSTimer timer)
     {
-        FindAllPlayerTimers();
+        Debug.Log("PhotoTaking? ATring to add new player to timers with owner? " + timer.IsOwner);
+
+        if ( timer.IsOwner ) return; // don't track self
+
+        Debug.Log("PhotoTaking? Adding new player to timers with owner: " + timer.OwnerClientId);
+
+        _playerTimers.Add(timer);
+
+        string nickname = _sessionStart.FindNickname(timer.OwnerClientId);
+
+        for ( int j = 0; j < _sessionStart.PlayerList.Length; j++ )
+        {
+            if ( _sessionStart.PlayerList[j].text == nickname )
+            {
+                _clientToIndex[timer.OwnerClientId] = j;
+                break;
+            }
+        }
     }
 
-    private void RemovePlayer(ulong clientId)
+    public void UpdateList()
+    {
+        foreach (GPSTimer timer in _playerTimers )
+        {
+            string nickname = _sessionStart.FindNickname(timer.OwnerClientId);
+
+            for ( int j = 0; j < _sessionStart.PlayerList.Length; j++ )
+            {
+                if ( _sessionStart.PlayerList[j].text == nickname )
+                {
+                    _clientToIndex[timer.OwnerClientId] = j;
+                    break;
+                }
+            }
+        }
+    }
+
+    public void RemovePlayer(ulong clientId)
     {
         _playerTimers.RemoveAll(timer => timer.OwnerClientId == clientId);
         _clientToIndex.Remove(clientId);
+    }
+
+    private void OnDisable()
+    {
+        _sessionStart.UpdateList -= UpdateList;
     }
 }

@@ -6,24 +6,41 @@ using UnityEngine;
 public class GPSTimer : NetworkBehaviour
 {
     [SerializeField] private float _baseRunTime = 20f;
-    [SerializeField] private TMP_Text _text;
+    private TMP_Text _text;
     private float _runTime;
     private bool _GPSsuccess = false;
 
-    public NetworkVariable<ulong> Timer => _timer;
-    private NetworkVariable<ulong> _timer = new NetworkVariable<ulong>(
+    public int Timer => _timer.Value;
+    private NetworkVariable<int> _timer = new NetworkVariable<int>(
         default,
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Owner
     );
 
-    private void Start()
+    public override void OnNetworkSpawn()
     {
-        StartCoroutine( StartGPS() );
+        base.OnNetworkSpawn();
+
+        TimerDisplay display = FindFirstObjectByType<TimerDisplay>();
+        display.AddPlayer(this);
+
+        if ( IsOwner )
+        {
+            PhotoTaking photoTaking = FindFirstObjectByType<PhotoTaking>();
+            photoTaking.SetGPS(this);
+
+            StartCoroutine( StartGPS() );
+            _text = display.TimeText;
+            Debug.Log("text is null? " + _text == null);
+        }
     }
 
     private IEnumerator StartGPS()
     {
+        Debug.Log("PhotoTaking? Trying to start GPS. ");
+
+        if ( ! IsOwner ) yield break;
+
         #if UNITY_EDITOR
         yield return new WaitUntil( () => UnityEditor.EditorApplication.isRemoteConnected);
 
@@ -80,20 +97,13 @@ public class GPSTimer : NetworkBehaviour
             _GPSsuccess = true;
     }
 
-    private void Update()
-    {
-        if ( Input.GetKeyDown(KeyCode.K))
-            StartRun();
-    }
-
-    public void StartRun()
-    {
-        StartCoroutine( StartCount() );
-    }
-
     public IEnumerator StartCount()
     {
-        Debug.Log("Moving Starting Count. ");
+        Debug.Log("PhotoTaking? Trying to start Count: " + IsOwner);
+
+        if ( ! IsOwner ) yield break;
+
+        Debug.Log("PhotoTaking? Moving Starting Count. ");
 
         // wait until there is no movement
         WaitUntil waitTillNotMoving = new WaitUntil( () => !IsMoving() );
@@ -101,20 +111,23 @@ public class GPSTimer : NetworkBehaviour
         _runTime = _baseRunTime;
 
         Debug.Log("Run time Moving. ");
+        Debug.Log("Updating timer:  " +_runTime + " text null? " + _text == null );
 
         while ( _runTime > 0 )
         {
-            Debug.Log("Running Moving and input location is: " + Input.location.isEnabledByUser);
+            _text.text = _runTime.ToString("F2");
+            _runTime -= Time.deltaTime;
+
+            int t2 = Mathf.FloorToInt(_runTime);
+            if ( t2 != _timer.Value && t2 >= 0)
+                _timer.Value = t2;
+
+            Debug.Log("Updating timer:  " +_runTime + " text null? " + _text == null + " _timer? " + _timer.Value );
 
             if ( _GPSsuccess )
                 yield return waitTillNotMoving;
-
-            _runTime -= Time.deltaTime;
-            _timer.Value = (ulong)_runTime;
             
             yield return null;
-
-            _text.text = _runTime.ToString();
         }
     }
 

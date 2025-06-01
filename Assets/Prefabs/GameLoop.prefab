@@ -10,10 +10,11 @@ GameObject:
   m_Component:
   - component: {fileID: 6239323114404484437}
   - component: {fileID: 2950808682958287700}
-  - component: {fileID: 1266433401796896034}
   - component: {fileID: 2741938763769201153}
+  - component: {fileID: 1266433401796896034}
   - component: {fileID: 3566116113246036621}
   - component: {fileID: 3532032233043547889}
+  - component: {fileID: 1786660578836684055}
   - component: {fileID: 5486100186556008137}
   m_Layer: 0
   m_Name: GameLoop
@@ -49,7 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 2807046547
+  GlobalObjectIdHash: 32672042
   InScenePlacedSourceGlobalObjectIdHash: 2688904072
   DeferredDespawnTick: 0
   Ownership: 1
@@ -62,23 +63,6 @@ MonoBehaviour:
   AutoObjectParentSync: 1
   SyncOwnerTransformWhenParented: 0
   AllowOwnerToParent: 0
---- !u!114 &1266433401796896034
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7903454958936054629}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 6207489ccaadf8c4aa1cd28741aacd51, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  ShowTopMostFoldoutHeaderGroup: 1
-  _states:
-  - {fileID: 3566116113246036621}
-  - {fileID: 3532032233043547889}
-  _gameRounds: 8
 --- !u!114 &2741938763769201153
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -107,6 +91,24 @@ MonoBehaviour:
   - {fileID: 0}
   _editNickname: {fileID: 0}
   _InputField: {fileID: 0}
+--- !u!114 &1266433401796896034
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7903454958936054629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6207489ccaadf8c4aa1cd28741aacd51, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  _states:
+  - {fileID: 3566116113246036621}
+  - {fileID: 3532032233043547889}
+  - {fileID: 1786660578836684055}
+  _gameRounds: 8
 --- !u!114 &3566116113246036621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -140,7 +142,27 @@ MonoBehaviour:
   _display: {fileID: 0}
   _takePhoto: {fileID: 0}
   _canvas: {fileID: 0}
-  _gpsTimerPrefab: {fileID: 0}
+  _gpsTimerPrefab: {fileID: 5072266083602811306, guid: d669f410ea8086b408278c07bae3d0cb, type: 3}
+  _nullTexture: {fileID: 2800000, guid: f08672ff521b92541b8001beac4518de, type: 3}
+--- !u!114 &1786660578836684055
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7903454958936054629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5f30027350d202346bb39362bce5786b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  _sessionStart: {fileID: 2741938763769201153}
+  _gameloop: {fileID: 1266433401796896034}
+  _canvas: {fileID: 0}
+  _timerTMP: {fileID: 0}
+  _playerNick: {fileID: 0}
+  _display: {fileID: 0}
   _nullTexture: {fileID: 2800000, guid: f08672ff521b92541b8001beac4518de, type: 3}
 --- !u!114 &5486100186556008137
 MonoBehaviour:
@@ -154,6 +176,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 796cda2c66f12ca47a6f9bfb882de3dd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
   _timerList:
   - {fileID: 0}
   - {fileID: 0}

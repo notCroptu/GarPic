@@ -16,6 +16,9 @@ public class HostJoin : MonoBehaviour
     {
         _networkSetup.OnError += GiveError;
         _inputField.onValueChanged.AddListener(OnInputChanged);
+
+        if ( _networkSetup == null )
+            _networkSetup = FindFirstObjectByType<NetworkSetup>();
     }
 
 private void OnInputChanged(string value)

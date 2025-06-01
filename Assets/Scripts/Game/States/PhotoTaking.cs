@@ -27,21 +27,36 @@ public class PhotoTaking : GameState
 
         base.OnNetworkSpawn();
 
+        if ( IsServer || IsHost )
+        {
+            AddPlayer(_networkSetup.NetworkManager.LocalClientId);
+            _networkSetup.NetworkManager.OnClientConnectedCallback += AddPlayer;
+        }
+    }
+
+    public void AddPlayer(ulong clientId)
+    {
+        Debug.Log("Adding GPSTimer from server.");
+
         GameObject TimerObj = Instantiate(_gpsTimerPrefab);
 
         TimerObj.GetComponent<NetworkObject>()
-            .SpawnWithOwnership(_networkSetup.NetworkManager.LocalClientId);
+            .SpawnWithOwnership(clientId);
+    }
 
-        _timer = TimerObj.GetComponent<GPSTimer>();
+    public void SetGPS(GPSTimer timer)
+    {
+        _timer = timer;
     }
 
     private IEnumerator DelayedCameraInitialization()
     {
         yield return null;
 
+        #if !UNITY_EDITOR
         yield return AskCameraPermission();
-
         InitializeCamera();
+        #endif
     }
 
     private IEnumerator AskCameraPermission()
@@ -62,9 +77,14 @@ public class PhotoTaking : GameState
 
     private void InitializeCamera()
     {
+        Debug.Log("Photo Taking initializing Camera. ");
         _webcamTexture = new WebCamTexture();
         _display.color = Color.white;
         _display.texture = _webcamTexture;
+
+        if ( _webcamTexture.isPlaying )
+            _webcamTexture.Stop();
+        
         _webcamTexture.Play();
     }
 
@@ -79,6 +99,14 @@ public class PhotoTaking : GameState
 
     public void TakeSnapshot()
     {
+        #if UNITY_EDITOR
+        if ( _imageBytes == null )
+        {
+            _imageBytes = _nullTexture.EncodeToPNG();
+            return;    
+        }
+        #endif
+
         if ( _webcamTexture == null || !_webcamTexture.isPlaying )
             return;
 
@@ -114,6 +142,7 @@ public class PhotoTaking : GameState
         foreach ( ulong clientID in _networkSetup.NetworkManager.ConnectedClientsIds )
             if ( ! _doneClients.Contains(clientID) )
                 return false;
+        Debug.Log("All clients are done taking a photo. ");
         return true;
     }
 
@@ -130,7 +159,10 @@ public class PhotoTaking : GameState
         yield return _timer.StartCount();
 
         _takePhoto.gameObject.SetActive(false);
-        _webcamTexture.Stop();
+
+        if ( _webcamTexture != null && _webcamTexture.isPlaying )
+            _webcamTexture.Stop();
+        
         yield return null;
         _display.texture = _photo;
 
@@ -149,6 +181,7 @@ public class PhotoTaking : GameState
     [ServerRpc(RequireOwnership = false)]
     public void ClientDoneServerRpc(ServerRpcParams rpcParams = default)
     {
+        Debug.Log("player: " + rpcParams.Receive.SenderClientId + " done taking photo. Done Count: " + _doneClients.Count);
         _doneClients.Add(rpcParams.Receive.SenderClientId);
     }
 
@@ -163,14 +196,10 @@ public class PhotoTaking : GameState
         if (_imageBytes == null)
         {
             Debug.Log("PhotoTaking no photo to upload!");
-            #if UNITY_EDITOR
-            _imageBytes = _nullTexture.EncodeToPNG();
-            #elif UNITY_ANDROID
             yield break;
-            #endif
         }
 
-        string fileName = $"{NetworkManager.ServerClientId}/{_networkSetup.NetworkManager.LocalClientId}/photo_{_gameloop.Round}.png";
+        string fileName = $"{_networkSetup.SessionCode}/{_networkSetup.NetworkManager.LocalClientId}/photo_{_gameloop.Round.Value}.png";
         string url = $"{LoadSupabaseConfig.Config.supabaseURL}/storage/v1/object/{LoadSupabaseConfig.Config.supabaseBUCKET}/{fileName}";
 
         Debug.Log("PhotoTaking url: "  + url);

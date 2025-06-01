@@ -6,7 +6,7 @@ public class GameLoop : NetworkBehaviour
 {
     [SerializeField] private GameState[] _states;
     [SerializeField] private int _gameRounds = 8;
-    public int Round { get; private set; }
+    public NetworkVariable<int> Round { get; private set; } = new();
 
     private void Start()
     {
@@ -28,7 +28,7 @@ public class GameLoop : NetworkBehaviour
     {
         for ( int i = 1 ; i <= _gameRounds ; i++ )
         {
-            Round = i;
+            Round.Value = i;
             foreach (GameState state in _states)
             {
                 Debug.Log("Starting gamestate: " + state.name);
