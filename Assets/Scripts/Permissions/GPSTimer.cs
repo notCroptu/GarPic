@@ -103,6 +103,8 @@ public class GPSTimer : NetworkBehaviour
 
         if ( ! IsOwner ) yield break;
 
+        _stop = false;
+
         Debug.Log("PhotoTaking? Moving Starting Count. ");
 
         // wait until there is no movement
@@ -126,9 +128,21 @@ public class GPSTimer : NetworkBehaviour
 
             if ( _GPSsuccess )
                 yield return waitTillNotMoving;
+
+            if (_stop)
+                break;
             
             yield return null;
         }
+
+        _timer.Value = 0;
+    }
+
+    private bool _stop;
+
+    public void StopCoroutine()
+    {
+        _stop = true;
     }
 
     private LocationInfo? _lastLocation;

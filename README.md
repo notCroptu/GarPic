@@ -344,6 +344,16 @@ Since this step is just for viewing and does not affect gameplay or voting, I ch
 
 After the main coroutine is done, the server calls `DisableShowcaseClientRpc` to hide showcase UI on every client's screen.
 
+#### Voting
+
+The `Voting` phase begins after all players have submitted their photos for the round, which were previously saved in `Showcase`, and excluding their own photo, are asked to vote on which photo best represents the word for that round.
+
+For each photo, the player's nickname and image are shown, along with a corresponding voting button that is set up by the client alone when the server calls the `SetUpPicturesClientRpc()` in the main coroutine. Once the client votes, the result and their own client ID is sent to the host using `VoteServerRpc()`, and the UI is disabled to prevent multiple votes from the same client.
+
+Votes are tracked using a server side Dictionary, where the key is the client ID of the photo's author, and the value is a list of client IDs who voted for that photo.
+
+A `NetworkVariable` timer is displayed, controlled by the server to make sure the process doesn't go on indefinitely, and once either all players have voted or the timer is out, the voting phase ends.
+
 ### Conclusions
 
 DontDestroyWithOwner for switching host in case of disconnect?

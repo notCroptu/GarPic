@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: 3566116113246036621}
   - component: {fileID: 3532032233043547889}
   - component: {fileID: 1786660578836684055}
+  - component: {fileID: 813900159556525745}
   - component: {fileID: 5486100186556008137}
   m_Layer: 0
   m_Name: GameLoop
@@ -108,6 +109,7 @@ MonoBehaviour:
   - {fileID: 3566116113246036621}
   - {fileID: 3532032233043547889}
   - {fileID: 1786660578836684055}
+  - {fileID: 813900159556525745}
   _gameRounds: 8
 --- !u!114 &3566116113246036621
 MonoBehaviour:
@@ -164,6 +166,59 @@ MonoBehaviour:
   _playerNick: {fileID: 0}
   _display: {fileID: 0}
   _nullTexture: {fileID: 2800000, guid: f08672ff521b92541b8001beac4518de, type: 3}
+--- !u!114 &813900159556525745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7903454958936054629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 46ba4b8047ef6824cb2c13a13cbac860, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  _showcase: {fileID: 1786660578836684055}
+  _sessionStart: {fileID: 2741938763769201153}
+  _canvas: {fileID: 0}
+  _timerTMP: {fileID: 0}
+  _nickList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _imageList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _buttonList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _goList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!114 &5486100186556008137
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -187,3 +242,4 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   _sessionStart: {fileID: 2741938763769201153}
+  <TimeText>k__BackingField: {fileID: 0}

@@ -116,6 +116,7 @@ public class PhotoTaking : GameState
         _imageBytes = _photo.EncodeToPNG();
 
         _canvas.SetActive(false);
+        _timer.StopCoroutine();
     }
 
 
@@ -151,14 +152,13 @@ public class PhotoTaking : GameState
         Debug.Log("Client started PhotoTaking. ");
 
         _canvas.SetActive(true);
-        _takePhoto.gameObject.SetActive(true);
 
         yield return DelayedCameraInitialization();
 
-        // wait until count is done
+        // wait until count is done or picture is taken
         yield return _timer.StartCount();
 
-        _takePhoto.gameObject.SetActive(false);
+        _canvas.SetActive(false);
 
         if ( _webcamTexture != null && _webcamTexture.isPlaying )
             _webcamTexture.Stop();
@@ -172,8 +172,7 @@ public class PhotoTaking : GameState
             _doneClients.Add(_networkSetup.NetworkManager.LocalClientId);
         else
             ClientDoneServerRpc();
-        
-        _canvas.SetActive(false);
+
         _imageBytes = null;
         _photo = null;
     }

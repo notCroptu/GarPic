@@ -1,4 +1,5 @@
 using System.Collections;
+using System.Collections.Generic;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -14,6 +15,8 @@ public class Showcase : GameState
     [SerializeField] private TMP_Text _playerNick;
     [SerializeField] private RawImage _display;
     [SerializeField] private Texture2D _nullTexture;
+
+    public Dictionary<ulong, Texture2D> RoundPictures { get; private set; }
 
     private NetworkVariable<int> _timer = new();
 
@@ -31,6 +34,7 @@ public class Showcase : GameState
     private void Start()
     {
         _canvas.SetActive(false);
+        RoundPictures = new();
     }
 
     public override IEnumerator State()
@@ -161,6 +165,7 @@ public class Showcase : GameState
         Debug.Log("done getting photo for : " + clientId);
 
         _display.texture = photo;
+        RoundPictures[clientId] = photo;
     }
 
     private void UpdateTimer()

@@ -31,7 +31,7 @@ public class GameLoop : NetworkBehaviour
             Round.Value = i;
             foreach (GameState state in _states)
             {
-                Debug.Log("Starting gamestate: " + state.name);
+                Debug.Log("Starting gamestate: " + state);
                 yield return state.State();
             }
         }
