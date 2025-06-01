@@ -334,6 +334,16 @@ With this I also to created a separate viewer for it, `TimerDisplay` that would 
 
 #### Showcase
 
+The Showcase phase handles the part of the game where, after all photos are submitted, each player’s photo is presented to everyone for a set period, along with their nickname, so all players see each valid entry before voting and have an opportunity to talk about it.
+
+The photos are taken from the Supabase bucket, the server first requests a header to check if the photo url from a client was uploaded, and if so, it calls `UpdatePictureClientRpc` so that all clients get and display that specific image, along with the correct nickname from session start's `NetworkNickname` list
+
+While the photo is being shown, a `NetworkVariable` timer counts down from 10 seconds for all clients to update their display at the same time using the shared value. After the countdown finishes, the showcase moves on to the next player’s photo and repeats the previous process for everyone.
+
+Since this step is just for viewing and does not affect gameplay or voting, I chose to have the server control the timer for everyone. Even if a player has a slow connection and their image takes longer to appear, the game doesn't pause for them, to avoid making the entire group wait on one person’s network, which I felt would be more frustrating for a bigger number of players.
+
+After the main coroutine is done, the server calls `DisableShowcaseClientRpc` to hide showcase UI on every client's screen.
+
 ### Conclusions
 
 DontDestroyWithOwner for switching host in case of disconnect?
