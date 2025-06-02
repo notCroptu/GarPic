@@ -24,6 +24,8 @@ public class SessionStart : NetworkBehaviour
             );
     private NetworkSetup _networkSetup;
 
+    public string ClientNick { get; private set; }
+
     public Action UpdateList;
 
     public struct NetworkNickname : INetworkSerializable, IEquatable<NetworkNickname>
@@ -63,7 +65,8 @@ public class SessionStart : NetworkBehaviour
                 NetworkVariableWritePermission.Server
             );*/
         _nicknames.OnListChanged += UpdatePlayerList;
-        _InputField.text = "P" + _networkSetup.NetworkManager.LocalClientId.ToString();
+        ClientNick = "P" + _networkSetup.NetworkManager.LocalClientId.ToString();
+        _InputField.text = ClientNick;
 
         if ( IsHost || IsServer )
         {
@@ -129,6 +132,8 @@ public class SessionStart : NetworkBehaviour
             SetNickname(clientId, newNickname);
         else
             SetNicknameServerRpc(newNickname);
+
+        ClientNick = newNickname;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -187,6 +192,9 @@ public class SessionStart : NetworkBehaviour
         UpdateList?.Invoke();
     }
 
+    public event Action<string> LoginPlayer;
+    public event Action<string> LogoutPlayer;
+
     // the 3 next methods ar only available for host
 
     /// <summary>
@@ -198,6 +206,8 @@ public class SessionStart : NetworkBehaviour
 
         NetworkNickname nickname = new() { clientId = playerID, nickname = "P" + playerID.ToString() };
         _nicknames.Add(nickname);
+
+        LoginPlayer?.Invoke(nickname.nickname.ToString());
 
         Debug.Log("host? Added new player: " + playerID + " nick count now: " + _nicknames.Count);
 
@@ -212,6 +222,8 @@ public class SessionStart : NetworkBehaviour
         {
             if (_nicknames[i].clientId == playerID)
             {
+                LogoutPlayer?.Invoke(_nicknames[i].nickname.ToString());
+
                 _nicknames.Remove(_nicknames[i]);
                 Debug.Log("host? Removed player: " + playerID + " nick count now: " + _nicknames.Count);
                 break;
@@ -227,7 +239,7 @@ public class SessionStart : NetworkBehaviour
     {
         if ( ! IsServer ) return;
 
-        _startGame.interactable = currentPlayers >= 1; // 1 phones for now, should be 3
+        _startGame.interactable = currentPlayers >= 3; // 1 phones for now, should be 3
     }
 
     public string FindNickname(ulong clientId)

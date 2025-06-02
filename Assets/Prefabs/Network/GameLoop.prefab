@@ -18,6 +18,7 @@ GameObject:
   - component: {fileID: 813900159556525745}
   - component: {fileID: 8834061495554695721}
   - component: {fileID: 5486100186556008137}
+  - component: {fileID: 2790447737290185658}
   m_Layer: 0
   m_Name: GameLoop
   m_TagString: Untagged
@@ -114,6 +115,7 @@ MonoBehaviour:
   - {fileID: 8834061495554695721}
   _startOver: {fileID: 0}
   _waiting: {fileID: 0}
+  _sessionStart: {fileID: 2741938763769201153}
   _gameRounds: 1
 --- !u!114 &3566116113246036621
 MonoBehaviour:
@@ -303,3 +305,20 @@ MonoBehaviour:
   - {fileID: 0}
   _sessionStart: {fileID: 2741938763769201153}
   <TimeText>k__BackingField: {fileID: 0}
+--- !u!114 &2790447737290185658
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7903454958936054629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 080c956bf2895384d89218784af9dbc7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  _messages: {fileID: 0}
+  _sessionStart: {fileID: 2741938763769201153}
+  _inputField: {fileID: 0}
+  _send: {fileID: 0}

@@ -9,7 +9,7 @@ using UnityEngine;
 public class LeaderBoard : GameState
 {
     [SerializeField] private GameObject _canvas;
-    [SerializeField] private float _leaderBoardTime = 6f;
+    [SerializeField] private float _leaderBoardTime = 5f;
     [SerializeField] private GameLoop _gameloop;
     [SerializeField] private SessionStart _sessionStart;
     [SerializeField] private Voting _voting;

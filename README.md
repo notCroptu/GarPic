@@ -378,11 +378,17 @@ When a client disconnects, the `NetworkSetup` class checks if the `OnClientDisco
 
 However, if the host disconnects, the `NetworkManager` automatically triggers `OnClientDisconnected(ulong)` on each connected client, passing in each client's own ID, disconnecting every client to exit the session and return to the lobby.
 
+#### WebChat
+
+For the WebChat I had theI considered using RPCs to send messages between clients but I wasn’t sure if this approach was appropriate for handling potentially uncontrolled input, such as users spamming messages. After researching, I found that using RPCs was indeed a common and suitable solution, as demonstrated in this tutorial:
+
+[YouTube Tutorial – Multiplayer Chat Using RPCs](https://www.youtube.com/watch?v=ATiBSj_KHv8)
+
+I implemented a `SendMessageServerRpc()` to allow clients to send messages to the server, which would then relay them to all connected clients. The server then calls `ReceiveMessageClientRpc()` to distribute the message. On the client side, I set up a scrolling UI that updates when a new message is received and notifies the player accordingly.
+
+Additionally, I connected the chat system to `OnServerStarted` to automatically send join and leave messages using each player's correct nickname.
+
 ### Conclusions
-
-DontDestroyWithOwner for switching host in case of disconnect?
-
-when host is disconnected game does not register it going away and doesnt switch automatically the host?
 
 events and delegates are very good
 
