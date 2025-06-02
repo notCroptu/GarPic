@@ -380,13 +380,15 @@ However, if the host disconnects, the `NetworkManager` automatically triggers `O
 
 #### WebChat
 
-For the WebChat I had theI considered using RPCs to send messages between clients but I wasn’t sure if this approach was appropriate for handling potentially uncontrolled input, such as users spamming messages. After researching, I found that using RPCs was indeed a common and suitable solution, as demonstrated in this tutorial:
+For the live chat I had the idea of using RPCs to send messages between clients but I wasn’t sure if this approach was appropriate for handling potentially uncontrolled input, such as users spamming messages, so I had to research for common implementations and found this:
 
-[YouTube Tutorial – Multiplayer Chat Using RPCs](https://www.youtube.com/watch?v=ATiBSj_KHv8)
+[YouTube - Multiplayer Chat Using RPCs](https://www.youtube.com/watch?v=ATiBSj_KHv8)
 
-I implemented a `SendMessageServerRpc()` to allow clients to send messages to the server, which would then relay them to all connected clients. The server then calls `ReceiveMessageClientRpc()` to distribute the message. On the client side, I set up a scrolling UI that updates when a new message is received and notifies the player accordingly.
+The reason why I doubted this is because I had heard previously that NetworkManager had a live chat feature, but after confirming my ideas I moved on to implement it.
 
-Additionally, I connected the chat system to `OnServerStarted` to automatically send join and leave messages using each player's correct nickname.
+First I made a `SendMessageServerRpc()` to allow clients to send messages to the server, which would them to tell teh server to call `ReceiveMessageClientRpc()` to distribute the message, and let clients update their UI and get notified of a new message.
+
+I also connected it to `StartSession`'s Add and Remove actions to that the server would send join and leave messages using each player's correct nickname.
 
 ### Conclusions
 
