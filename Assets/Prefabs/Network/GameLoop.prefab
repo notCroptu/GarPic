@@ -114,7 +114,7 @@ MonoBehaviour:
   - {fileID: 8834061495554695721}
   _startOver: {fileID: 0}
   _waiting: {fileID: 0}
-  _gameRounds: 8
+  _gameRounds: 1
 --- !u!114 &3566116113246036621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -166,6 +166,7 @@ MonoBehaviour:
   _sessionStart: {fileID: 2741938763769201153}
   _gameloop: {fileID: 1266433401796896034}
   _canvas: {fileID: 0}
+  _showcaseTime: 10
   _timerTMP: {fileID: 0}
   _playerNick: {fileID: 0}
   _display: {fileID: 0}
@@ -186,6 +187,7 @@ MonoBehaviour:
   _showcase: {fileID: 1786660578836684055}
   _sessionStart: {fileID: 2741938763769201153}
   _canvas: {fileID: 0}
+  _votingTime: 40
   _timerTMP: {fileID: 0}
   _nickList:
   - {fileID: 0}
@@ -237,6 +239,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   _canvas: {fileID: 0}
+  _leaderBoardTime: 6
   _gameloop: {fileID: 1266433401796896034}
   _sessionStart: {fileID: 2741938763769201153}
   _voting: {fileID: 813900159556525745}
@@ -259,6 +262,15 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   _goList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _layoutList:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}

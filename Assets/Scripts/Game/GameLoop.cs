@@ -10,6 +10,7 @@ public class GameLoop : NetworkBehaviour
     [SerializeField] private GameState[] _states;
     [SerializeField] private Button _startOver;
     [SerializeField] private TMP_Text _waiting;
+    [SerializeField] private SessionStart _sessionStart;
     [SerializeField] private int _gameRounds = 8;
     public bool FinalRound { get; private set; } = false;
     public NetworkVariable<int> Round { get; private set; } = new();
@@ -19,6 +20,16 @@ public class GameLoop : NetworkBehaviour
         // StartCoroutine(GameLoopCoroutine());
         _startOver.gameObject.SetActive(false);
         _waiting.gameObject.SetActive(false);
+    }
+
+    public override void OnNetworkSpawn()
+    {
+        Debug.Log("OnNetworkSpawn IsServer: " + IsServer );
+
+        base.OnNetworkSpawn();
+
+        if ( IsHost || IsServer )
+            _startOver.onClick.AddListener( RestartGame );
     }
 
     public void StartGame()
@@ -45,12 +56,13 @@ public class GameLoop : NetworkBehaviour
             }
         }
 
+        RestartClientRpc();
+        
         _startOver.gameObject.SetActive(true);
-        SetUpPicturesClientRpc();
     }
 
     [ClientRpc]
-    public void SetUpPicturesClientRpc()
+    public void RestartClientRpc()
     {
         if ( IsHost || IsServer ) return;
 
@@ -58,10 +70,18 @@ public class GameLoop : NetworkBehaviour
     }
 
     public void RestartGame()
+    {   
+        StartClientRpc();
+    }
+
+    [ClientRpc]
+    public void StartClientRpc()
     {
         foreach (GameState state in _states)
             state.ResetValues();
-        
-        FindFirstObjectByType<NetworkSetup>().StartGame();
+
+        _sessionStart.ResetValues();
+
+        Start();
     }
 }

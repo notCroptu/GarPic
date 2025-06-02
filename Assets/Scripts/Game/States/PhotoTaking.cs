@@ -126,9 +126,9 @@ public class PhotoTaking : GameState
 
     public override IEnumerator State()
     {
-        _doneClients = new HashSet<ulong>();
-
         yield return base.State();
+        
+        _doneClients = new HashSet<ulong>();
 
         Debug.Log("Server started PhotoTaking. ");
 

@@ -34,7 +34,7 @@ public class Showcase : GameState
 
     private void Start()
     {
-        _canvas.SetActive(false);
+        ResetValues();
     }
 
     public override IEnumerator State()
@@ -201,4 +201,12 @@ public class Showcase : GameState
     private string BuildPhotoUrl(ulong id) =>
         $"{LoadSupabaseConfig.Config.supabaseURL}/storage/v1/object/{LoadSupabaseConfig.Config.supabaseBUCKET}/" +
         $"{_networkSetup.SessionCode}/{id}/photo_{_gameloop.Round.Value}.png";
+
+    public override void ResetValues()
+    {
+        base.ResetValues();
+        
+        _canvas.SetActive(false);
+        Debug.Log("Start up showcase. Networks: " + _timer.Value);
+    }
 }

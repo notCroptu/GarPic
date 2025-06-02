@@ -41,6 +41,11 @@ public class LeaderBoard : GameState
         }
     }
     
+    private void Start()
+    {
+        ResetValues();
+    }
+
     public override void OnNetworkSpawn()
     {
         Debug.Log("OnNetworkSpawn IsServer: " + IsServer );
@@ -58,8 +63,6 @@ public class LeaderBoard : GameState
 
             AddPlayer(_networkSetup.NetworkManager.LocalClientId);
         }
-
-        _canvas.SetActive(false);
     }
 
     public void AddPlayer(ulong playerID)
@@ -152,36 +155,46 @@ public class LeaderBoard : GameState
 
     private void UpdateLeaderBoard(NetworkListEvent<NetworkScore> change)
     {
+        Debug.Log("Updated score list with action: " + change.Type);
+        
         // Get scores in descending order
         List<NetworkScore> scoresList = new List<NetworkScore>(_scores.Count);
         for (int i = 0; i < _scores.Count; i++)
             scoresList.Add(_scores[i]);
         List<NetworkScore> orderedScores = scoresList.OrderByDescending(s => s.score).ToList();
 
-        foreach (GameObject go in _goList)
-            go.SetActive(false);
+        // foreach (GameObject go in _goList)
+            // go.SetActive(false);
+
+        // For some reason deactivating and then activating again is keeping all gos inactive
+        HashSet<GameObject> gos = _goList.ToHashSet();
 
         // Animate each row to its new position
         for (int rank = 0; rank < orderedScores.Count; rank++)
         {
-            var scoreEntry = orderedScores[rank];
-            int goIndex = FindPlayerIndex(scoreEntry.clientId);
+            NetworkScore score = orderedScores[rank];
+            int goIndex = FindPlayerIndex(score.clientId);
 
             if (goIndex < 0 || goIndex >= _goList.Length) continue;
 
             _goList[goIndex].SetActive(true);
-            _nickList[goIndex].text = _sessionStart.FindNickname(scoreEntry.clientId);
-            _scoreList[goIndex].text = scoreEntry.score.ToString();
+            gos.Remove(_goList[goIndex]);
+            _nickList[goIndex].text = _sessionStart.FindNickname(score.clientId);
+            _scoreList[goIndex].text = score.score.ToString();
 
             RectTransform moving = _goList[goIndex].GetComponent<RectTransform>();
             RectTransform target = _layoutList[rank].GetComponent<RectTransform>();
             StartCoroutine(AnimateMoveToTarget(moving, target.anchoredPosition));
         }
+
+        foreach ( GameObject go in gos)
+            go.SetActive(false);
     }
 
-    // Maps a clientId to the UI array index
     private int FindPlayerIndex(ulong clientId)
     {
+        // Maps a clientId to the UI array index, even if it's not correct when it shows the leaderboard again,
+        // It gives convincing visual feedback that the game is progressing
         foreach ( ulong id in _networkSetup.NetworkManager.ConnectedClientsIds )
         {
             if ( id == clientId)
@@ -206,6 +219,14 @@ public class LeaderBoard : GameState
     public override void ResetValues()
     {
         base.ResetValues();
-        _scores.Clear();
+
+        if ( _scores != null )
+        {
+            for ( int i = 0 ; i < _scores.Count ; i++ )
+                _scores[i] = new NetworkScore { clientId = _scores[i].clientId, score = 0 };
+        }
+        
+        _canvas.SetActive(false);
+        Debug.Log("Start up session start. Networks: " + _scores.Count);
     }
 }

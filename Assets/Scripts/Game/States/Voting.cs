@@ -24,6 +24,11 @@ public class Voting : GameState
     private HashSet<ulong> _doneClients;
     public Dictionary<ulong, List<ulong>> Votes { get; private set; }
 
+    private void Start()
+    {
+        ResetValues();
+    }
+
     public override void OnNetworkSpawn()
     {
         Debug.Log("PhotoTaking OnNetworkSpawn IsServer: " + IsServer );
@@ -32,19 +37,14 @@ public class Voting : GameState
 
         _timer ??= new();
         _timer.OnValueChanged += (_, _) => UpdateTimer();
-
-        _canvas.SetActive(false);
-
-        foreach(GameObject o in _goList)
-            o.SetActive(false);
     }
 
     public override IEnumerator State()
     {
+        yield return base.State();
+
         _doneClients = new HashSet<ulong>();
         Votes = new();
-
-        yield return base.State();
 
         Debug.Log("Server started Voting. ");
 
@@ -162,5 +162,17 @@ public class Voting : GameState
             _timerTMP.gameObject.SetActive(true);
 
         _timerTMP.text = _timer.Value.ToString();
+    }
+
+    public override void ResetValues()
+    {
+        base.ResetValues();
+        
+        _canvas.SetActive(false);
+        
+        foreach(GameObject o in _goList)
+            o.SetActive(false);
+        
+        Debug.Log("Start up voting. Networks: " + _timer.Value);
     }
 }

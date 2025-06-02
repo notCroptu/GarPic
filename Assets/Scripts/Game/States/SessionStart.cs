@@ -43,6 +43,11 @@ public class SessionStart : NetworkBehaviour
         }
     }
 
+    private void Start()
+    {
+        ResetValues();
+    }
+
     public override void OnNetworkSpawn()
     {
         Debug.Log("OnNetworkSpawn IsServer: " + IsServer );
@@ -87,11 +92,6 @@ public class SessionStart : NetworkBehaviour
     {
         yield return null;
         UpdatePlayerList(default);
-    }
-
-    private void Start()
-    {
-        _canvas.SetActive(true);
     }
 
     /// <summary>
@@ -242,5 +242,18 @@ public class SessionStart : NetworkBehaviour
             _networkSetup.NetworkManager.OnClientConnectedCallback -= AddPlayer;
             _networkSetup.NetworkManager.OnClientDisconnectCallback -= RemovePlayer;
         }
+    }
+
+    public void ResetValues()
+    {
+        _sessionCode.gameObject.SetActive(true);
+
+        if ( IsHost || IsServer )
+            _startGame.gameObject.SetActive(true);
+        else
+            _startGame.gameObject.SetActive(false);
+        
+        _canvas.SetActive(true);
+        Debug.Log("Start up session start. Networks: " + _nicknames.Count);
     }
 }
