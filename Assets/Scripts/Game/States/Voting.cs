@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -11,6 +10,7 @@ public class Voting : GameState
     [SerializeField] private Showcase _showcase;
     [SerializeField] private SessionStart _sessionStart;
     [SerializeField] private GameObject _canvas;
+    [SerializeField] private float _votingTime = 40f;
 
     [SerializeField] private TMP_Text _timerTMP;
 
@@ -23,23 +23,6 @@ public class Voting : GameState
 
     private HashSet<ulong> _doneClients;
     public Dictionary<ulong, List<ulong>> Votes { get; private set; }
-
-    public struct NetworkScore : INetworkSerializable, IEquatable<NetworkScore>
-    {
-        public ulong clientId;
-        public int score;
-
-        public bool Equals(NetworkScore other)
-        {
-            return clientId == other.clientId && score.Equals(other.score);
-        }
-
-        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-        {
-            serializer.SerializeValue(ref clientId);
-            serializer.SerializeValue(ref score);
-        }
-    }
 
     public override void OnNetworkSpawn()
     {
@@ -67,17 +50,26 @@ public class Voting : GameState
 
         SetUpPicturesClientRpc();
 
-        float t = 10f;
-        while ( t > 0f || AllClientsDone() )
+        if ( _showcase.RoundPictures.Count > 0
+            && _networkSetup.NetworkManager.ConnectedClients.Count > 1)
         {
-            t -= Time.deltaTime;
+            float t = _votingTime;
+            while ( t > 0f )
+            {
+                t -= Time.deltaTime;
 
-            int t2 = Mathf.FloorToInt(t);
-            if ( t2 != _timer.Value && t2 >= 0)
-                _timer.Value = t2;
-        
-            yield return null;
+                int t2 = Mathf.FloorToInt(t);
+                if ( t2 != _timer.Value && t2 >= 0)
+                    _timer.Value = t2;
+            
+                yield return null;
+
+                if ( AllClientsDone() )
+                    break;
+            }
         }
+
+        Debug.Log("Voting turning off. ");
 
         DisableVotingClientRpc();
     }

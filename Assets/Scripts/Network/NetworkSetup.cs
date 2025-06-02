@@ -58,7 +58,7 @@ public class NetworkSetup : MonoBehaviour
             _image.color = Color.red;
     }
 
-    private void StartGame()
+    public void StartGame()
     {
         // SceneManager.LoadSceneAsync(_gameScene);
         NetworkManager.SceneManager.LoadScene(_gameScene, LoadSceneMode.Single);

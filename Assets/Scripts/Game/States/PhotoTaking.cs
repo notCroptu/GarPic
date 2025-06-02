@@ -1,6 +1,7 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
+using Newtonsoft.Json;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -31,6 +32,8 @@ public class PhotoTaking : GameState
         {
             AddPlayer(_networkSetup.NetworkManager.LocalClientId);
             _networkSetup.NetworkManager.OnClientConnectedCallback += AddPlayer;
+
+            StartCoroutine(DeleteFolder(_networkSetup.SessionCode));
         }
     }
 
@@ -234,5 +237,39 @@ public class PhotoTaking : GameState
         }
 
         Debug.Log("done PhotoTaking");
+    }
+
+    public override void ResetValues()
+    {
+        base.ResetValues();
+        StartCoroutine(DeleteFolder(_networkSetup.SessionCode));
+    }
+    
+    IEnumerator DeleteFolder(string folderName)
+    {
+        string path = $"{LoadSupabaseConfig.Config.supabaseURL}/storage/v1/object/{LoadSupabaseConfig.Config.supabaseBUCKET}/";
+
+        Debug.Log("Photo taking delete url: "  + path);
+
+        for (int i = 0; i < 8; i++)
+        {
+            for (int j = 1; j <= 8; j++)
+            {
+                string url = $"{path}{folderName}/{i}/photo_{j}.png";
+                Debug.Log("Photo taking delete url: "  + url);
+
+                UnityWebRequest www = UnityWebRequest.Delete(url);
+                www.SetRequestHeader("apikey", LoadSupabaseConfig.Config.supabaseANON);
+                www.SetRequestHeader("Authorization", $"Bearer {LoadSupabaseConfig.Config.supabaseANON}");
+                www.SetRequestHeader("Content-Type", "image/png");
+
+                yield return www.SendWebRequest();
+
+                if ( www.result != UnityWebRequest.Result.Success )
+                {
+                    Debug.Log("Error deleting " + i + " " + j + " file: " + www.error);
+                }
+            }
+        }
     }
 }

@@ -11,6 +11,7 @@ public class Showcase : GameState
     [SerializeField] private SessionStart _sessionStart;
     [SerializeField] private GameLoop _gameloop;
     [SerializeField] private GameObject _canvas;
+    [SerializeField] private float _showcaseTime = 10f;
     [SerializeField] private TMP_Text _timerTMP;
     [SerializeField] private TMP_Text _playerNick;
     [SerializeField] private RawImage _display;
@@ -79,7 +80,7 @@ public class Showcase : GameState
 
                         // waits a a server side countdown
 
-                        float t = 10f;
+                        float t = _showcaseTime;
                         while ( t > 0f )
                         {
                             t -= Time.deltaTime;

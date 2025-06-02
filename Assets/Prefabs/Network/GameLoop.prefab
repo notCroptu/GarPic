@@ -16,6 +16,7 @@ GameObject:
   - component: {fileID: 3532032233043547889}
   - component: {fileID: 1786660578836684055}
   - component: {fileID: 813900159556525745}
+  - component: {fileID: 8834061495554695721}
   - component: {fileID: 5486100186556008137}
   m_Layer: 0
   m_Name: GameLoop
@@ -110,6 +111,9 @@ MonoBehaviour:
   - {fileID: 3532032233043547889}
   - {fileID: 1786660578836684055}
   - {fileID: 813900159556525745}
+  - {fileID: 8834061495554695721}
+  _startOver: {fileID: 0}
+  _waiting: {fileID: 0}
   _gameRounds: 8
 --- !u!114 &3566116113246036621
 MonoBehaviour:
@@ -202,6 +206,50 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   _buttonList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _goList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+--- !u!114 &8834061495554695721
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7903454958936054629}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1bd312d2b23ba940be8d0111aaf36ff, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ShowTopMostFoldoutHeaderGroup: 1
+  _canvas: {fileID: 0}
+  _gameloop: {fileID: 1266433401796896034}
+  _sessionStart: {fileID: 2741938763769201153}
+  _voting: {fileID: 813900159556525745}
+  _nickList:
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  - {fileID: 0}
+  _scoreList:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}

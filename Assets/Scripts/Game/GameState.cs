@@ -19,4 +19,9 @@ public abstract class GameState : NetworkBehaviour
 
         Debug.Log("starting State. and is server or host. ");
     }
+
+    public virtual void ResetValues()
+    {
+
+    }
 }

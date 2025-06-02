@@ -28,12 +28,15 @@ public class WordSelection : GameState
 
         _word.OnValueChanged += (_, _) => UpdateWord();
         _timer.OnValueChanged += (_, _) => UpdateTimer();
+
+        if ( IsHost || IsServer )
+            _timer.Value = 0;
     }
 
     private void Start()
     {
         _wordTMP.gameObject.SetActive(false);
-        _timerTMP.gameObject.SetActive(false);
+        _timerTMP.gameObject.SetActive(true);
         _canvas.SetActive(true);
     }
 
@@ -72,6 +75,8 @@ public class WordSelection : GameState
         
             yield return null;
         }
+
+        _timer.Value = 0;
     }
 
     private void UpdateWord()
@@ -85,9 +90,6 @@ public class WordSelection : GameState
 
     private void UpdateTimer()
     {
-        if ( ! _timerTMP.gameObject.activeSelf )
-            _timerTMP.gameObject.SetActive(true);
-
         _timerTMP.text = _timer.Value.ToString();
     }
 }
