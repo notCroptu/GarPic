@@ -354,6 +354,30 @@ Votes are tracked using a server side Dictionary, where the key is the client ID
 
 A `NetworkVariable` timer is displayed, controlled by the server to make sure the process doesn't go on indefinitely, and once either all players have voted or the timer is out, the voting phase ends.
 
+#### LeaderBoard
+
+The Leaderboard phase shows the final score rankings to all players at the end of the game session, that are stored in a `NetworkList` of `NetworkScore` containing the clientId and their corresponding score. This list is updated by the server after the Voting phase concludes with points assigned both to the player who received the most votes and to the players who voted for them.
+
+Clients receive a `ShowLeaderBoardClientRpc()` call that enables the UI, and a `DisableLeaderBoardClientRpc()` hides it again after a short delay unless it's the final round, so players remain viewing scores until host restarts. The leaderboard itself is updated whenever the scores `NetworkList` changes.
+
+#### Resetting the Session
+
+To allow players to replay the game without starting a new session, I had to reset the scores and tell Supabase to empty the session folder.
+
+On the Unity side, I added a virtual `ResetValues()` method to the GameState abstract class, which is called by the GameLoop when restarting and is responsible for resetting all UI elements to their original `Start()` state and clearing persistent gameplay data such as player scores stored in the `NetworkList` used by the `Leaderboard`.
+
+On the Supabase side, since storage is object based, the ideal approach would have been for `PhotoTaking` to tell the bucket to delete the entire folder containing the round’s images by submitting a single request with a list of all file paths inside it, but because of either Supabase policy restrictions or issues with the way my requests were formatted, the PUSH request for delete was not working as expected, and I had to send an individual DELETE request for each file inside the session folder, which was definitely not an ideal solution.
+
+Once both the local game state and Supabase storage were reset, the game is started again.
+
+#### Exit
+
+When a player or host wants to quite the session, they may press the back button, which will open a panel to confirm exit action, when confirming with yes, a method `ExitToLobby()` is called, that uses `NetworkManager.Shutdown()` as client, and if it's the host `NetworkManager.Shutdown(true)` to remove player objects.
+
+When a client disconnects, the `NetworkSetup` class checks if the `OnClientDisconnected(ulong clientId)` callback was triggered with their own client ID, and if it is, it returns that client to the lobby without affecting others.
+
+However, if the host disconnects, the `NetworkManager` automatically triggers `OnClientDisconnected(ulong)` on each connected client, passing in each client's own ID, disconnecting every client to exit the session and return to the lobby.
+
 ### Conclusions
 
 DontDestroyWithOwner for switching host in case of disconnect?

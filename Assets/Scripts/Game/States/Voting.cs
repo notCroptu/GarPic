@@ -39,6 +39,13 @@ public class Voting : GameState
         _timer.OnValueChanged += (_, _) => UpdateTimer();
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        _timer.OnValueChanged -= (_, _) => UpdateTimer();
+    }
+
     public override IEnumerator State()
     {
         yield return base.State();
@@ -167,7 +174,7 @@ public class Voting : GameState
     public override void ResetValues()
     {
         base.ResetValues();
-        
+
         _canvas.SetActive(false);
         
         foreach(GameObject o in _goList)

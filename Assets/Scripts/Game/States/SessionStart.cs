@@ -63,7 +63,7 @@ public class SessionStart : NetworkBehaviour
                 NetworkVariableWritePermission.Server
             );*/
         _nicknames.OnListChanged += UpdatePlayerList;
-        _InputField.text = _networkSetup.NetworkManager.LocalClientId.ToString();
+        _InputField.text = "P" + _networkSetup.NetworkManager.LocalClientId.ToString();
 
         if ( IsHost || IsServer )
         {
@@ -83,6 +83,23 @@ public class SessionStart : NetworkBehaviour
         }
 
         StartCoroutine( DelayUI() );
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        if (_nicknames != null)
+            _nicknames.OnListChanged -= UpdatePlayerList;
+
+        if (IsHost || IsServer)
+        {
+            if (_networkSetup.NetworkManager != null)
+            {
+                _networkSetup.NetworkManager.OnClientConnectedCallback -= AddPlayer;
+                _networkSetup.NetworkManager.OnClientDisconnectCallback -= RemovePlayer;
+            }
+        }
     }
 
     /// <summary>

@@ -32,6 +32,13 @@ public class Showcase : GameState
         _timer.OnValueChanged += (_, _) => UpdateTimer();
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        _timer.OnValueChanged -= (_, _) => UpdateTimer();
+    }
+
     private void Start()
     {
         ResetValues();
@@ -205,7 +212,7 @@ public class Showcase : GameState
     public override void ResetValues()
     {
         base.ResetValues();
-        
+
         _canvas.SetActive(false);
         Debug.Log("Start up showcase. Networks: " + _timer.Value);
     }

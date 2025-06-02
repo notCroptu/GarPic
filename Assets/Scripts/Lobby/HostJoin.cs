@@ -21,23 +21,29 @@ public class HostJoin : MonoBehaviour
             _networkSetup = FindFirstObjectByType<NetworkSetup>();
     }
 
-private void OnInputChanged(string value)
-{
-    string upper = value.ToUpper();
-    if (upper == _inputField.text)
-        return;
-    _inputField.text = upper;
-    _inputField.caretPosition = upper.Length;
-}
+    private void OnInputChanged(string value)
+    {
+        string upper = value.ToUpper();
+        if (upper == _inputField.text)
+            return;
+        _inputField.text = upper;
+        _inputField.caretPosition = upper.Length;
+    }
 
     public void StartClient()
     {
+        if ( _networkSetup == null )
+            _networkSetup = FindFirstObjectByType<NetworkSetup>();
+        
         _networkSetup.StartClient(_inputField.text);
         _Done.interactable = false;
     }
 
     public void StartServer()
     {
+        if ( _networkSetup == null )
+            _networkSetup = FindFirstObjectByType<NetworkSetup>();
+        
         _networkSetup.StartServer();
         _Host.interactable = false;
     }
@@ -63,6 +69,7 @@ private void OnInputChanged(string value)
 
     private void OnDisable()
     {
-        _networkSetup.OnError -= GiveError;
+        if ( _networkSetup == null )
+            _networkSetup.OnError -= GiveError;
     }
 }

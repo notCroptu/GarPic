@@ -52,7 +52,7 @@ public class NetworkSetup : MonoBehaviour
     [SerializeField] private Image _image;
     private void Update()
     {
-        if ( NetworkManager != null && IsServer)
+        if ( NetworkManager != null && NetworkManager.IsServer && NetworkManager.IsListening)
             _image.color = Color.green;
         else
             _image.color = Color.red;
@@ -234,16 +234,18 @@ public class NetworkSetup : MonoBehaviour
 
     private void OnClientConnected(ulong clientId)
     {
-        if ( ! NetworkManager.IsServer ) return;
-
         UnityEngine.Debug.Log($"Player {clientId} connected!");
     }
 
     private void OnClientDisconnected(ulong clientId)
     {
-        if ( ! NetworkManager.IsServer ) return;
-
         UnityEngine.Debug.Log($"Player {clientId} disconnected!");
+
+        if ( clientId == NetworkManager.LocalClientId )
+        {
+            SceneManager.LoadScene("Lobby");
+            IsServer = false;
+        }
     }
 
     private IEnumerator StartAsClientCR()
@@ -251,6 +253,10 @@ public class NetworkSetup : MonoBehaviour
         NetworkManager.enabled = true;
         _transport.enabled = true;
         // Wait a frame for setups to be done
+
+        NetworkManager.OnClientConnectedCallback += OnClientConnected;
+        NetworkManager.OnClientDisconnectCallback += OnClientDisconnected;
+        
         yield return null;
 
         if (IsRelay)

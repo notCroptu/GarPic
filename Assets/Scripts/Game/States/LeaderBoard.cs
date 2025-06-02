@@ -65,6 +65,23 @@ public class LeaderBoard : GameState
         }
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        if (_scores != null)
+            _scores.OnListChanged -= UpdateLeaderBoard;
+
+        if (IsHost || IsServer)
+        {
+            if (_networkSetup.NetworkManager != null)
+            {
+                _networkSetup.NetworkManager.OnClientConnectedCallback -= AddPlayer;
+                _networkSetup.NetworkManager.OnClientDisconnectCallback -= RemovePlayer;
+            }
+        }
+    }
+
     public void AddPlayer(ulong playerID)
     {
         if ( ! IsServer ) return;
@@ -220,7 +237,7 @@ public class LeaderBoard : GameState
     {
         base.ResetValues();
 
-        if ( _scores != null )
+        if ( ( IsHost || IsServer ) && _scores != null )
         {
             for ( int i = 0 ; i < _scores.Count ; i++ )
                 _scores[i] = new NetworkScore { clientId = _scores[i].clientId, score = 0 };

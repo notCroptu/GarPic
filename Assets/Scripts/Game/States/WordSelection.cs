@@ -29,7 +29,18 @@ public class WordSelection : GameState
         _word.OnValueChanged += (_, _) => UpdateWord();
         _timer.OnValueChanged += (_, _) => UpdateTimer();
 
-        _timer.Value = -1;
+        if ( IsHost || IsServer )
+            _timer.Value = -1;
+        else
+            UpdateTimer();
+    }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        _timer.OnValueChanged -= (_, _) => UpdateTimer();
+        _word.OnValueChanged -= (_, _) => UpdateWord();
     }
 
     private void Start()
@@ -100,6 +111,9 @@ public class WordSelection : GameState
         _wordTMP.gameObject.SetActive(false);
         _timerTMP.gameObject.SetActive(true);
         _canvas.SetActive(true);
+
+        if ( IsHost || IsServer )
+            _word.Value = "";
 
         Debug.Log("Start up word selection. Networks: " + _word.Value + " " + _timer.Value);
     }

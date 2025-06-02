@@ -30,6 +30,14 @@ public class TimerDisplay : NetworkBehaviour
 
         StartCoroutine(AfterSpawnCoroutine());
     }
+
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        _sessionStart.UpdateList -= UpdateList;
+        _networkManager.OnClientDisconnectCallback -= RemovePlayer;
+    }
     
     private IEnumerator AfterSpawnCoroutine()
     {

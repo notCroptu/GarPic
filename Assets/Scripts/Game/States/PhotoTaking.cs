@@ -37,6 +37,19 @@ public class PhotoTaking : GameState
         }
     }
 
+    public override void OnNetworkDespawn()
+    {
+        base.OnNetworkDespawn();
+        
+        if (IsHost || IsServer)
+        {
+            if (_networkSetup.NetworkManager != null)
+            {
+                _networkSetup.NetworkManager.OnClientConnectedCallback -= AddPlayer;
+            }
+        }
+    }
+
     public void AddPlayer(ulong clientId)
     {
         Debug.Log("Adding GPSTimer from server.");
@@ -127,7 +140,7 @@ public class PhotoTaking : GameState
     public override IEnumerator State()
     {
         yield return base.State();
-        
+
         _doneClients = new HashSet<ulong>();
 
         Debug.Log("Server started PhotoTaking. ");
