@@ -683,7 +683,17 @@ sequenceDiagram
 
 ## Conclusions
 
-events and delegates are very good
+In this project I learned about the usage of Unity's Netcode for Gameobjects, mobile development, batch, cloud storage for large files using `UnityWebRequest`s, APIs and HTML request policies like Supabase's, and asynchronous permission operations for GPS and Camera actions and their usage in development.
+
+All the new aspects were a challenge, and I even had to give up some ideas as they seemed to get out of scope, like keeping session images so players could view them later on a world map, letting players give word prompts to influence Datamuse API, and switching hosts when the original left the lobby.
+
+Despite that, the project helped me better my understanding of how to make multiplayer games and how to choose the right tools for network in different parts of a Unity game.
+
+It was hard debugging `buildInstallLaunch.bat` script and `UnityWebRequest` errors, as I often didn't know how to interpret them and I couldn't trace them back to any code, but building and testing went fine once I adapted to using the Unity Editor as either a host or client depending on what I needed to use the Console to debug, along with two Android devices for testing, which learning to use logcat was especially helpful in when I needed to confirm relay behaviors at the same time.
+
+Netcode was difficult to understand at first, but once I got the core concepts, I was able to apply them consistently throughout the project, and I’m especially grateful that I separated the game phases early on, as this kept me from feeling overwhelmed when applying all `NetworkVariables` and `RPC`s, and let me to take things step by step.
+
+If I were to redo the project, I would rely more on delegates to manage game changes and separate each game phase into a manager and a viewer component for organization, and if I wanted to make a manager component a prefab later, as it happened with `GPSTimer`.
 
 ## Acknowledgements
 
@@ -703,3 +713,4 @@ events and delegates are very good
 10. [Unity Scripting API: UnityWebRequest](https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.html)
 11. [Unity Manual: Android Manifest](https://docs.unity3d.com/Manual//android-manifest.html)
 12. [Unity Scripting API: WebCamTexture](https://docs.unity3d.com/ScriptReference/WebCamTexture.html)
+13. [HienaDev - ProjetoRedes](https://github.com/HienaDev/ProjetoRedes)
