@@ -12,7 +12,7 @@
 
 ### Link to Build
 
-Link yuh
+<https://drive.google.com/drive/folders/1h_RgIsq1xPjykGQ8UPjZt4rqc_8HsC60?usp=sharing>
 
 ## **Report**
 
@@ -21,6 +21,8 @@ Link yuh
 **GarPic** is a multiplayer mobile game where players take photos to visually represent secret words. In each round, all players receive the same word and must take a photo within a short time limit, if a player physically moves in the real world (with GPS), their timer is paused until they stop again, to encourage exploration.
 
 Once all photos are submitted, players vote on which best represents the word and points are awarded based on votes, the number of rounds is based on the number of players, and a leaderboard is presented at the end of each session.
+
+---
 
 ### Tech Decisions and Possibility Research
 
@@ -62,7 +64,9 @@ The game would need to keep track of:
 - Rounds (What things need to be shown, images, votes, photo taking period);
 - GPS movement (is moving or not, no need for location to be passed).
 
-### Mobile Testing
+---
+
+### **Mobile Testing**
 
 For testing and debugging mobile input and gameplay during development, I first installed Unity Remote 5 on an Android device.
 
@@ -126,7 +130,7 @@ The command for cmd would look like this:
 
 `"C:\Program Files\Unity\Hub\Editor\6000.0.30f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" logcat -s Unity`
 
-### Permissions
+#### Permissions
 
 An example oif permissions necessary for the project would be the counter that is stopped when the player is moving, for which we need GPS, which is accessible using Unity's Location Services, for which the (Old) Input system already provides a variable of `Input.location`.
 
@@ -160,7 +164,9 @@ Although it is also necessary to ask for permissions for the Camera, as both GPS
 
 [Unity Documentation - WebCamTexture](https://docs.unity3d.com/ScriptReference/WebCamTexture.html)
 
-### UnityWebRequest
+---
+
+### **UnityWebRequest**
 
 Unity Web Request proved to be useful for more than sending camera data, as I wanted players to get unexpected words rather than ones I preset from my own list so I explored using online APIs for which I found UnityWebRequest to be useful.
 
@@ -202,7 +208,9 @@ This doesn't mean it will take more work later as I only need clients to be awar
 
 The client credentials however had to be put away in a json, hidden by GitIgnore in order to keep the project safe in the git. Therefore Supabase would only work in my own PC or builds I make.
 
-### Server Relay
+---
+
+### **Server Relay**
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
@@ -252,7 +260,9 @@ Once allocated, we need to set client relay data for `UnityTransport` using `Set
 
 Errors are displayed to the viewer at runtime in case a connection is not established.
 
-### Netcode
+---
+
+### **Netcode**
 
 Since I didn’t need to synchronize transforms, I decided to use a single `NetworkObject` object that contains both the session manager and game loop logic, and serves as the central authority for all network communication.
 
@@ -261,6 +271,8 @@ Since I didn’t need to synchronize any transforms, I thought this choice was i
 To start, I added the `NetworkObject` cat the top of my component list, as the unity documentation warns to do for proper execution order:
 
 [Unity Netcode Docs - NetworkObject Component Order](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/#component-order)
+
+---
 
 #### Session Lobby
 
@@ -360,6 +372,8 @@ The Leaderboard phase shows the final score rankings to all players at the end o
 
 Clients receive a `ShowLeaderBoardClientRpc()` call that enables the UI, and a `DisableLeaderBoardClientRpc()` hides it again after a short delay unless it's the final round, so players remain viewing scores until host restarts. The leaderboard itself is updated whenever the scores `NetworkList` changes.
 
+---
+
 #### Resetting the Session
 
 To allow players to replay the game without starting a new session, I had to reset the scores and tell Supabase to empty the session folder.
@@ -378,6 +392,8 @@ When a client disconnects, the `NetworkSetup` class checks if the `OnClientDisco
 
 However, if the host disconnects, the `NetworkManager` automatically triggers `OnClientDisconnected(ulong)` on each connected client, passing in each client's own ID, disconnecting every client to exit the session and return to the lobby.
 
+---
+
 #### WebChat
 
 For the live chat I had the idea of using RPCs to send messages between clients but I wasn’t sure if this approach was appropriate for handling potentially uncontrolled input, such as users spamming messages, so I had to research for common implementations and found this:
@@ -390,31 +406,186 @@ First I made a `SendMessageServerRpc()` to allow clients to send messages to the
 
 I also connected it to `StartSession`'s Add and Remove actions to that the server would send join and leave messages using each player's correct nickname.
 
+---
+
+### Analysis
+
+#### Supabase
+
+| Plan | Free $0/ month | Pro $25/ month | Team $599/ month | Enterprise |
+| -------------- | ----- | ----- | ----------- | ----------- |
+| Storage | 1 GB included | 100 GB included then $0.021 per GB | 100 GB included then $0.021 per GB | Custom |
+| Bandwidth | 5 GB included | 250 GB included then $0.09 per GB | 250 GB included then $0.09 per GB | Custom |
+| Pausing | After 1 week of inactivity | Never | Never | Never |
+
+[Supabase - Pricing](https://supabase.com/pricing)
+
+These limits are the most relevant for my project.
+
+For Supabase, only uploads affect storage, while downloads and confirmations requests like delete affect bandwidth, because they are sending something back, though request's size is minimal, and deletions also help reduce storage usage.
+
+The Free plan's auto pause after 1 week of inactivity could matter during development but in a commercial or frequently played game, the frequent requests would prevent the project from being paused.
+
+##### Supabase Analysis
+
+After testing, I reviewed my Supabase bucket and found typical image sizes such as:
+
+- image/png - 131.1 KB
+- image/png - 359.77 KB
+- image/png - 388.69 KB
+- image/png - 312.76 KB
+- image/png - 323.83 KB
+- image/png - 145.8 KB
+- image/png - 332.2 KB
+- image/png - 412.98 KB
+- image/png - 349.59 KB
+- image/png - 329.24 KB
+
+So an image uploaded to my bucket would on average be ~310 KB and if we do the calculations for the ideal game of 8 players and 8 rounds:
+
+- Storage (uploads):
+
+  Each player uploads one image per round:
+
+      8 players × 8 rounds × 310 KB = 19,840 KB ≈ 19.8 MB per game
+
+- Bandwidth (downloads):
+
+  Each player downloads 8 images per round:
+
+      8 players × 8 rounds × 8 images × 310 KB = 158,720 KB ≈ 158.7 MB per game
+
+- Bandwidth (image existence checks):
+
+  The host checks for each image before display and we assume a 200 B confirmation response:
+
+      8 players × 8 rounds × 1 check × 200 B = 12,800 B ≈ 12.8 KB per game
+
+- Bandwidth (deletion confirmations):
+
+  Assuming each image deletion returns a 200 B confirmation response:
+
+      8 players × 8 rounds × 8 images × 200 B = 102,400 B ≈ 102.4 KB per game
+
+Per game this would average to:
+
+- Total storage impact per session: ~19.8 MB
+- Total bandwidth impact per session: ~158.8 MB
+
+Which means, that on the free plan I could have:
+
+- (5,000 MB / 158.8 MB) 31 full games per month on bandwidth.
+- (1,000 MB / 19.8 MB) ~50 games worth of images before reaching storage limit.
+
+On the rest of the plans:
+
+| Plan  | Monthly Cost | Bandwidth | Storage | Estimated Sessions/Storage |
+| -------------- | ------------ | --------- | ------- | ---------------------------------------------------------- |
+| Pro        | \$25         | 250 GB    | 100 GB  | 1574 games/month, ~5050 games worth of images |
+| Team       | \$599        | 250 GB    | 100 GB  | Same as Pro, but includes options that are not necessary for my project |
+| Enterprise | Custom       | Custom    | Custom  | Depends on negotiated limits |
+
+So if necessary for commercial distribution of the game, I would get pro, but would not really need anything more than that unless ofr some reason the game blew up.
+
+#### Unity Relay
+
+[Unity Relay - Pricing](https://unity.com/products/gaming-services/pricing)
+
+---
+
+### Network Architecture Diagram
+
+![Network Architecture Diagram](https://github.com/notCroptu/GarPic/blob/main/Assets/Textures/NAD.png)
+
+---
+
+### Protocol Diagram
+
+```mermaid
+  sequenceDiagram
+
+  Note over Host,Unity Relay: Hosting
+
+  Host->>Unity Relay: Create session?
+  Unity Relay->>Host: Session
+
+  Note over Host,*Client: Join at Any Time
+
+  *Client->>Unity Relay: Join Session
+  Unity Relay->>Host: Client Joined
+
+  Note over Host,Supabase: Game Loop
+
+  Host->>*Client: Start Game
+
+  Host->>DatamuseAPI: Get Random Word
+  Host->>*Client: New Word
+  Host->>*Client: Countdown
+
+  Host->>*Client: Take Photo
+  *Client->>Supabase: Upload Photo
+  *Client->>Host: Done Taking Photo or Timer Ran Out
+
+  Host->>*Client: Showcase
+  Host->>Supabase: Photo for *client exists?
+  Host->>*Client: Showcase photo for *client
+  *Client->>Supabase: Get photo for *client
+  Host->>*Client: *Countdown
+
+  Host->>*Client: Vote
+  Host->>*Client: Countdown
+  *Client->>Host: Done Voting
+
+  Host->>*Client: Leaderboard
+  Host->>*Client: Update Scores
+
+  Host->>*Client: Back to Random Word
+
+  Note over Host,Supabase: When All 8 Rounds are Done
+
+  Host->>*Client: Show Waiting for Host to Restart
+  Host->>*Client: Restart Game at Start Game
+  Host->>Supabase: Delete Session Folder
+
+  Note over Host,*Client: When Client Leaves
+
+  *Client->>Unity Relay: Leave
+  Unity Relay->>Host: Client left
+  Host->>*Client: Client left
+
+  Note over Host,*Client: When Host Leaves
+
+  Host->>Unity Relay: Leave
+  Unity Relay->>*Client: Host Left
+  *Client->>Unity Relay: Leave
+
+  Note over Host,*Client: On Webchat
+
+  *Client->>Host: New Message
+  Host->>*Client: New Message
+```
+
+---
+
 ### Conclusions
 
 events and delegates are very good
 
-Wa
+### Acknowledgements
 
-https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/
-
-https://www.youtube.com/watch?v=YmUnXsOp_t0
-https://discussions.unity.com/t/how-to-use-networklist/947471/2
-
-https://discussions.unity.com/t/how-to-refer-to-internal-json-file-on-android/222832
-
-https://discussions.unity.com/t/how-do-i-make-locationservice-start-work/153995
-
-https://support.unity.com/hc/en-us/articles/20152286417044-About-Relay-IPs-Ports-and-Firewall-Considerations
-
-https://docs.unity3d.com/Manual/UnityRemote5.html
-https://stackoverflow.com/questions/15800303/pausing-an-assembly-program
-https://developer.android.com/tools/adb
-https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.html
-https://docs.unity3d.com/Manual//android-manifest.html
-
-https://docs.unity3d.com/ScriptReference/WebCamTexture.html
+- [@N4taaa](https://github.com/N4taaa?tab=repositories) - Help with building the .bat file, aswell as choosing and setting up Supabase for `UnityWebRequest`.
 
 ### **Bibliography**
 
-1. [Title](link)
+1. [Unity Netcode for GameObjects – NetworkObject Basics](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/)
+2. [YouTube: Unity Netcode for GameObjects (Multiplayer Tutorial)](https://www.youtube.com/watch?v=YmUnXsOp_t0)
+3. [Unity Forum: How to Use NetworkList](https://discussions.unity.com/t/how-to-use-networklist/947471/2)
+4. [Unity Forum: Referencing Internal JSON File on Android](https://discussions.unity.com/t/how-to-refer-to-internal-json-file-on-android/222832)
+5. [Unity Forum: How to Make LocationService.Start Work](https://discussions.unity.com/t/how-do-i-make-locationservice-start-work/153995)
+6. [Unity Support: About Relay IPs, Ports, and Firewall Considerations](https://support.unity.com/hc/en-us/articles/20152286417044-About-Relay-IPs-Ports-and-Firewall-Considerations)
+7. [Unity Manual: Unity Remote 5](https://docs.unity3d.com/Manual/UnityRemote5.html)
+8. [Stack Overflow: Pausing an Assembly Program](https://stackoverflow.com/questions/15800303/pausing-an-assembly-program)
+9. [Android Developer: ADB (Android Debug Bridge)](https://developer.android.com/tools/adb)
+10. [Unity Scripting API: UnityWebRequest](https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.html)
+11. [Unity Manual: Android Manifest](https://docs.unity3d.com/Manual//android-manifest.html)
+12. [Unity Scripting API: WebCamTexture](https://docs.unity3d.com/ScriptReference/WebCamTexture.html)
