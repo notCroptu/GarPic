@@ -16,7 +16,7 @@
 
 ## **Report**
 
-### Project Description
+## Project Description
 
 **GarPic** is a multiplayer mobile game where players take photos to visually represent secret words. In each round, all players receive the same word and must take a photo within a short time limit, if a player physically moves in the real world (with GPS), their timer is paused until they stop again, to encourage exploration.
 
@@ -24,7 +24,7 @@ Once all photos are submitted, players vote on which best represents the word an
 
 ---
 
-### Tech Decisions and Possibility Research
+## Tech Decisions and Possibility Research
 
 The project will use `UnityNetcode` for GameObjects to handle multiplayer communication, roles, points...
 
@@ -32,7 +32,7 @@ With a modular setup that supports LAN and Unity Relay hosting as taught in clas
 
 Creating this project for mobile would be the most feasible version of the game due to the need for free movement and use of a camera and GPS, but user given permission will also need to be given to the game and will be something else to explore later on.
 
-#### Large Packets
+### Large Packets
 
 To have a mobile version of the game, we would need a way to handle PNGs in the game.
 
@@ -40,7 +40,7 @@ To capture them is the simpler part, as we can use Unity's WebCamTexture to ask 
 
 [Unity Web Request](https://docs.unity3d.com/ScriptReference/Networking.UnityWebRequest.html)
 
-#### Unity WebGL
+### Unity WebGL
 
 Using WebGL was also considered, as it would people to play without requiring them to install anything, and while it would still need permission to access camera and gallery, it could potentially run on more platforms and devices.
 
@@ -52,7 +52,7 @@ Testing the browser version would also be more complicated, as it would require 
 
 While the accessibility of a no-install was great, the limitations were too great for that single benefit, and as a result, the Unity Mobile version was chosen as the more practical option for development.
 
-### Server Functions
+## Server Functions
 
 The game would need to keep track of:
 
@@ -66,7 +66,7 @@ The game would need to keep track of:
 
 ---
 
-### **Mobile Testing**
+## **Mobile Testing**
 
 For testing and debugging mobile input and gameplay during development, I first installed Unity Remote 5 on an Android device.
 
@@ -93,7 +93,7 @@ In Unity, in Editor Project Settings it would also be necessary for Device to be
 
 After this, on connecting the Android phone via USB to the computer running the Unity Editor allows the game view to stream directly to the device using Unity Remote 5.
 
-#### Build, Install and Launch (.bat)
+### Build, Install and Launch (.bat)
 
 However, this setup only serves a way to debug input and rendering, and wouldn't reflect the device performance since it's still running from the editor, and some device inputs might still need to be built onto a mobile phone to reliably test them.
 
@@ -120,7 +120,7 @@ The script logic goes as follows:
 
 After this, I substituted the build and launch logic in `NetworkSetup` to use the .bad for launch on any connected phone.
 
-#### Debugging
+### Debugging
 
 To debug builds on mobile, I just needed to once again use adb to start a `logcat` while the phone is connected with udb debugging like described here:
 
@@ -130,7 +130,7 @@ The command for cmd would look like this:
 
 `"C:\Program Files\Unity\Hub\Editor\6000.0.30f1\Editor\Data\PlaybackEngines\AndroidPlayer\SDK\platform-tools\adb.exe" logcat -s Unity`
 
-#### Permissions
+### Permissions
 
 An example oif permissions necessary for the project would be the counter that is stopped when the player is moving, for which we need GPS, which is accessible using Unity's Location Services, for which the (Old) Input system already provides a variable of `Input.location`.
 
@@ -166,11 +166,11 @@ Although it is also necessary to ask for permissions for the Camera, as both GPS
 
 ---
 
-### **UnityWebRequest**
+## **UnityWebRequest**
 
 Unity Web Request proved to be useful for more than sending camera data, as I wanted players to get unexpected words rather than ones I preset from my own list so I explored using online APIs for which I found UnityWebRequest to be useful.
 
-#### Random Word API
+### Random Word API
 
 My first attempt used [Random Word API](https://random-word-api.herokuapp.com/word), as it was very simple to integrate and returned a new word every time. However, the words were often too technical, too weird even for the unexpectedness I was hoping for, and worried it would end up messing up the experience (like rare scientific names).
 
@@ -180,7 +180,7 @@ To integrate this into Unity, more specifically in the `WordSelection` script, I
 
 > **Note:** This might not have been a good API to use later on, as it has a maximum of 100,000 requests per day. (For example, with an average of 8 rounds per session and approximately 80,000 sessions per day (based on Gartic statistics during the pandemic), you could need up to 640,000 requests per day, plus, multiple requests might be needed per round if Word Selection fails.)
 
-#### Data Retrieval
+### Data Retrieval
 
 With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the *OLD* official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).
 
@@ -190,7 +190,7 @@ The coroutine part worked well with my setup as I had already decided to have a 
 
 If successful, the `UnityWebRequest` handler will contain any data retrieved from the webpage (in my case, only the text, which is JSON as most word APIs return), and I then only needed to parse the returned JSON response to extract the first word.
 
-#### Data Sending
+### Data Sending
 
 For camera implementation with `UnityWebRequest`, I needed my own database solution for storing images. I chose Supabase, recommended by a friend for being more affordable , performant, and for offering authentication support.
 
@@ -210,7 +210,7 @@ The client credentials however had to be put away in a json, hidden by GitIgnore
 
 ---
 
-### **Server Relay**
+## **Server Relay**
 
 To make playing sessions similar to popular party games, with a session code, GarPic uses Unity Relay Servers using `UnityNetcode for GameObjects` learned through the implementation taught in class:
 
@@ -222,19 +222,19 @@ This approach came from the setup simplicity for players, a simple UI and privat
 
 [Unity Support - About Relay IPs, Ports and Firewall Considerations](https://support.unity.com/hc/en-us/articles/20152286417044-About-Relay-IPs-Ports-and-Firewall-Considerations)
 
-#### Goals
+### Goals
 
 On opening the app, players would be met with a join button, to join existing available sessions through a code, or a host button to create a new session. Sessions would have a max of 8 players, but players would be allowed to join at any time, keeping in mind the game would not be prolonged for their benefit.
 
 When starting the game, players can either host a new session (generating a unique code) or join an existing session using a code shared by the host, sessions should handle up to 8 players and are open for joining until the game ends, but new players will join the ongoing game rather than restarting it for everyone.
 
-#### Cloud.Unity
+### Cloud.Unity
 
 Firstly, I had to add the Relay service provided by Unity to the project through Unity Dashboard, which was easy, and the project was already registered in my account there.
 
 Then, on editor I turned on Relay on `UnityTransport` and used the `NetworkSetup` script to save transport information such as if the client is server, and if it is hosted as relay, and what the session number is, which will be helpful for identifying photos in Supabase.
 
-#### Server Setup
+### Server Setup
 
 When entering the game, players have the option to host a session, which creates a new relay server where they can play.
 
@@ -248,7 +248,7 @@ We run `StartHost()` to initialize the client as host and start relaying, and af
 
 In the game scene, the host may wait for at least 3 players to join, after which they alone can start the game, and then the game loop logic is initialized and all clients synchronize to the main game scene.
 
-#### Client Setup
+### Client Setup
 
 Players who want to join a an existing session act as clients connect through the Unity Relay server using the session code provided by the host.
 
@@ -256,13 +256,13 @@ Upon inserting this code one the Join button on the lobby, the code is sent to t
 
 Once allocated, we need to set client relay data for `UnityTransport` using `SetClientRelayData`. Once that's done we can't forget to `StartClient()`, and after that the client’s state the game state is ready to be auto synchronized with the host.
 
-#### Error Handling
+### Error Handling
 
 Errors are displayed to the viewer at runtime in case a connection is not established.
 
 ---
 
-### **Netcode**
+## **Netcode**
 
 Since I didn’t need to synchronize transforms, I decided to use a single `NetworkObject` object that contains both the session manager and game loop logic, and serves as the central authority for all network communication.
 
@@ -274,7 +274,7 @@ To start, I added the `NetworkObject` cat the top of my component list, as the u
 
 ---
 
-#### Session Lobby
+### Session Lobby
 
 The session lobby is managed by the `SessionStart` script. At first, all players are displayed using their `clientId`, but each player can edit their nickname, which is then used throughout the game session.
 
@@ -290,7 +290,7 @@ I found this behavior explained and confirmed in this video:
 
 [Multiplayer Setup in Unity NGO - NetworkVariable](https://youtu.be/YmUnXsOp_t0?si=38MoRjY6DzF_RD0V&t=6374)
 
-##### Scene Management
+#### Scene Management
 
 However, even after this, changes to the nickname list were still not being shared with other clients. I found the problem was that `SessionStart` was placed directly in the scene and not set to spawn like with dynamic network objects using `NetworkObject.Spawn()`, and because I was also switching scenes (from the lobby to the game), the object was not automatically registered and synced across clients.
 
@@ -298,7 +298,7 @@ However, even after this, changes to the nickname list were still not being shar
 
 So I enabled Scene Management in the `NetworkManager` and started using `NetworkManager.SceneManager.LoadScene()` to transition between scenes instead of directly with `SceneManager`, so it knows to find and synchronize scene spawned objects across all clients during scene loading.
 
-##### Setting Nicks
+#### Setting Nicks
 
 Since I couldn’t rely on each client to detect new connections and add entries themselves as they could add each other multiple times, I first created a server RPC method, `SetNicknameServerRpc`, which theoretically would update the nickname associated with a given `clientId` when requested.
 
@@ -310,7 +310,7 @@ Regardless of `ServerRpc` permissions, `ClientRpc` will still call all clients, 
 
 ---
 
-#### Game Loop
+### Game Loop
 
 The Game Loop controls the overall game state, so whether players are supposed to be taking pictures, voting, or viewing the leaderboard, this control must come from a single client. Logically, this responsibility is given to the server or host, who is also the only one allowed to start the game with session start's "Start Game" button.
 
@@ -318,11 +318,11 @@ Inside the `GameLoop` script, a main coroutine iterates over an array of `GameSt
 
 The goal is that each `GameState` holds `NetworkVariable`s and uses RPCs to trigger UI changes on clients while the main game logic runs on the host side within the coroutine, modifying those variables and calling RPCs manually to make sure all clients remain synchronized.
 
-#### WordSelection
+### WordSelection
 
 Word Selection is the first game state in the loop and includes a `NetworkVariable` for the word that players must take pictures of, and a timer value that tells players how long they have to prepare.
 
-#### PhotoTaking
+### PhotoTaking
 
 Since the photo taking phase involves only individual players capturing their own photos, there is no need for them to share information with each other during this state. Because of this, the server's only responsibility was to wait until all clients reported that they had finished taking a photo.
 
@@ -336,7 +336,7 @@ Once a client finishes, it hides the state canvas and shows the player list UI f
 
 After everyone's reports as finished, the server moves on to the next state.
 
-##### GPSTimer
+#### GPSTimer
 
 This real-time sync is handled using the `GPSTimer`, which I initially thought of using with a `NetworkList`  to hold corresponding clientIDs and Timers ulong, following the same implementation logic as `Session Start`'s nickname `NetworkList`.
 
@@ -346,7 +346,7 @@ So using individual `NetworkVariable`s allowed me to let each player own and upd
 
 With this I also to created a separate viewer for it, `TimerDisplay` that would run inside the GameLoop scene spawned object, while `GPSTimer` became an instantiated `NetworkObject` in it's own prefab spawned by the server, so I would be able to use `FindObjectsByType()` to find the synchronized objects from which to collect the timer data.
 
-#### Showcase
+### Showcase
 
 The Showcase phase handles the part of the game where, after all photos are submitted, each player’s photo is presented to everyone for a set period, along with their nickname, so all players see each valid entry before voting and have an opportunity to talk about it.
 
@@ -358,7 +358,7 @@ Since this step is just for viewing and does not affect gameplay or voting, I ch
 
 After the main coroutine is done, the server calls `DisableShowcaseClientRpc` to hide showcase UI on every client's screen.
 
-#### Voting
+### Voting
 
 The `Voting` phase begins after all players have submitted their photos for the round, which were previously saved in `Showcase`, and excluding their own photo, are asked to vote on which photo best represents the word for that round.
 
@@ -368,7 +368,7 @@ Votes are tracked using a server side Dictionary, where the key is the client ID
 
 A `NetworkVariable` timer is displayed, controlled by the server to make sure the process doesn't go on indefinitely, and once either all players have voted or the timer is out, the voting phase ends.
 
-#### LeaderBoard
+### LeaderBoard
 
 The Leaderboard phase shows the final score rankings to all players at the end of the game session, that are stored in a `NetworkList` of `NetworkScore` containing the clientId and their corresponding score. This list is updated by the server after the Voting phase concludes with points assigned both to the player who received the most votes and to the players who voted for them.
 
@@ -376,7 +376,7 @@ Clients receive a `ShowLeaderBoardClientRpc()` call that enables the UI, and a `
 
 ---
 
-#### Resetting the Session
+### Resetting the Session
 
 To allow players to replay the game without starting a new session, I had to reset the scores and tell Supabase to empty the session folder.
 
@@ -386,7 +386,7 @@ On the Supabase side, since storage is object based, the ideal approach would ha
 
 Once both the local game state and Supabase storage were reset, the game is started again.
 
-#### Exit
+### Exit
 
 When a player or host wants to quite the session, they may press the back button, which will open a panel to confirm exit action, when confirming with yes, a method `ExitToLobby()` is called, that uses `NetworkManager.Shutdown()` as client, and if it's the host `NetworkManager.Shutdown(true)` to remove player objects.
 
@@ -396,7 +396,7 @@ However, if the host disconnects, the `NetworkManager` automatically triggers `O
 
 ---
 
-#### WebChat
+### WebChat
 
 For the live chat I had the idea of using RPCs to send messages between clients but I wasn’t sure if this approach was appropriate for handling potentially uncontrolled input, such as users spamming messages, so I had to research for common implementations and found this:
 
@@ -410,9 +410,9 @@ I also connected it to `StartSession`'s Add and Remove actions to that the serve
 
 ---
 
-### Analysis
+## Analysis
 
-#### Supabase
+### Supabase
 
 | Plan | Free $0/ month | Pro $25/ month | Team $599/ month | Enterprise |
 | -------------- | ----- | ----- | ----------- | ----------- |
@@ -428,7 +428,7 @@ For Supabase, only uploads affect storage, while downloads and confirmations req
 
 The Free plan's auto pause after 1 week of inactivity could matter during development but in a commercial or frequently played game, the frequent requests would prevent the project from being paused.
 
-##### Supabase Analysis
+#### Supabase Analysis
 
 After testing, I reviewed my Supabase bucket and found typical image sizes such as:
 
@@ -491,7 +491,7 @@ So if necessary for commercial distribution of the game, I would get pro, but I 
 
 ---
 
-#### Unity Relay
+### Unity Relay
 
 To analyze the game's Unity Relay bandwidth usage I downloaded the Unity Multiplayer Tools package, which comes with a NetworkObject bandwidth Module for the Profiler Tab.
 
@@ -537,7 +537,7 @@ For the ideal 8 round and 8 player game, where we suppose everyone always votes 
 
 We can calculate:
 
-##### Sent Bandwidth Cost
+#### Sent Bandwidth Cost
 
 | Event      | Calculations | Total |
 |------------|--------------------|-----|
@@ -549,9 +549,8 @@ We can calculate:
 | Leaderboard | ( 9 Bytes × 7 ) + ( 54 Bytes × 7 ) + ( 9 Bytes × 7 ) | 504 Bytes |
 
 **One Round Total Data**: 50,050 + 420 + 2,526 + 5,418 + 126 + 504 = **59,044 Bytes**
-**8 Rounds Total Data**: 59,044 * 8 = **472,352 Bytes**
 
----
+**8 Rounds Total Data**: 59,044 * 8 = **472,352 Bytes**
 
 Then we add Start, End and Restart events one time:
 
@@ -563,7 +562,7 @@ Then we add Start, End and Restart events one time:
 
 **Total Received Data**: 472,352 + 546 + 9,985 + 1,078 = **483,961 Bytes**
 
-##### Received Bandwidth Cost
+#### Received Bandwidth Cost
 
 | Event      | Calculations | Total |
 |------------|--------------------|-----|
@@ -575,9 +574,8 @@ Then we add Start, End and Restart events one time:
 | Leaderboard | 9 Bytes × 7 | 63 Bytes |
 
 **One Round Total Data**: 4,750 + 14,805 + 112 + 63 = **19,730 Bytes**
-**8 Rounds Total Data**: 19,730 * 8 = **157,840 Bytes**
 
----
+**8 Rounds Total Data**: 19,730 * 8 = **157,840 Bytes**
 
 Then we add Start, End and Restart events one time:
 
@@ -589,7 +587,7 @@ Then we add Start, End and Restart events one time:
 
 **Total Received Data**: 157,840 + 1,890 = **159,730 Bytes**
 
-##### Unity Relay Analysis
+#### Unity Relay Analysis
 
 - **Total = Sent + Received = 483,961 + 159,730 = 643,691 Bytes ≈ 0.61 MB**
 
@@ -609,16 +607,16 @@ So if necessary for commercial distribution of the game, this would match and go
 
 ---
 
-### Network Architecture Diagram
+## Network Architecture Diagram
 
 ![Network Architecture Diagram](https://github.com/notCroptu/GarPic/blob/main/Assets/Textures/NAD.png)
 
 ---
 
-### Protocol Diagram
+## Protocol Diagram
 
 ```mermaid
-  sequenceDiagram
+sequenceDiagram
 
   Note over Host,Unity Relay: Hosting
 
@@ -683,15 +681,15 @@ So if necessary for commercial distribution of the game, this would match and go
 
 ---
 
-### Conclusions
+## Conclusions
 
 events and delegates are very good
 
-### Acknowledgements
+## Acknowledgements
 
 - [@N4taaa](https://github.com/N4taaa?tab=repositories) - Help with building the .bat file, as well as choosing and setting up Supabase for `UnityWebRequest`.
 
-### **Bibliography**
+## **Bibliography**
 
 1. [Unity Netcode for GameObjects - NetworkObject Basics](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/)
 2. [YouTube: Unity Netcode for GameObjects (Multiplayer Tutorial)](https://www.youtube.com/watch?v=YmUnXsOp_t0)
