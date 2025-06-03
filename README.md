@@ -308,6 +308,8 @@ However, I discovered that the server or host client can't call a Server RPC, bu
 
 Regardless of `ServerRpc` permissions, `ClientRpc` will still call all clients, including the host, which useful for telling clients to close their session lobby canvases when the game starts on the host's side.
 
+---
+
 #### Game Loop
 
 The Game Loop controls the overall game state, so whether players are supposed to be taking pictures, voting, or viewing the leaderboard, this control must come from a single client. Logically, this responsibility is given to the server or host, who is also the only one allowed to start the game with session start's "Start Game" button.
@@ -485,11 +487,125 @@ On the rest of the plans:
 | Team       | \$599        | 250 GB    | 100 GB  | Same as Pro, but includes options that are not necessary for my project |
 | Enterprise | Custom       | Custom    | Custom  | Depends on negotiated limits |
 
-So if necessary for commercial distribution of the game, I would get pro, but would not really need anything more than that unless ofr some reason the game blew up.
+So if necessary for commercial distribution of the game, I would get pro, but I wouldn't need anything beyond that unless the game unexpectedly took off.
+
+---
 
 #### Unity Relay
 
+To analyze the game's Unity Relay bandwidth usage I downloaded the Unity Multiplayer Tools package, which comes with a NetworkObject bandwidth Module for the Profiler Tab.
+
+Using that, I composed the summary bellow of the estimated bandwidth usage for one full round of the game:
+
+| Game Phase | Type | Sent Bandwidth Cost | Received Bandwidth Cost | Times Performed |
+| -------------- | ------------ | --------- | --------- | --------- |
+| Start | Host start a Server | 17 Bytes | 0 Bytes | 1 |
+| Start | Client join a Server | 310 Bytes + ( 5 Bytes * nClients ) | 178 Bytes | 7 |
+| Start | Client Network Object GPSTimer | 100 Bytes *nClients | 64 Bytes | 7 |
+| Start | Client timer Network Variable from Object GPSTimer | 50 Bytes *nClients | 0 Bytes | 7 |
+| Start | Client Change nickname | 29 Bytes *nClients | 28 Bytes | *nTimes |
+| Start | Host Change nickname | 29 Bytes *nClients | 0 Bytes | *nTimes |
+| Constant | Time sync | 5 Bytes *nClients | 0 Bytes | Every 105 frames |
+| Constant | Web Chat Message | 39-137 Bytes *nClients | 44-145 Bytes | *nTimes |
+| Word Phase | Word Network Variable | 5 Bytes *nClients | 0 Bytes | 1 |
+| Word Phase | Timer Network Variable | 5 Bytes *nClients | 0 Bytes | 11 |
+| Photo Taking Phase | Enable Photo Taking | 9 Bytes *nClients | 0 Bytes | 1 |
+| Photo Taking Phase | GPSTimer Update Network Variable | 15 Bytes | 15 Bytes *nClients | 20 *nClients |
+| Photo Taking Phase | Client Confirm Done | 0 Bytes | 15 Bytes | *nClients  |
+| Photo Taking Phase | Disable Photo Taking | 9 Bytes *nClients | 0 Bytes | 1 |
+| ShowCase Phase  | Enable ShowCase | 9 Bytes *nClients | 0 Bytes | 1 |
+| ShowCase Phase | Showcase *clients photo | 9 Bytes *nClients | 0 Bytes | *nClients  |
+| ShowCase Phase | Timer Network Variable | 9 Bytes *nClients | 0 Bytes | *nClients *11 |
+| ShowCase Phase | Disable ShowCase | 9 Bytes *nClients | 0 Bytes | 1 |
+| Voting Phase  | Enable Voting | 9 Bytes *nClients | 0 Bytes | 1 |
+| Voting Phase | Client Confirm Done | 0 Bytes | 16 Bytes | *nClients |
+| Voting Phase | Disable Voting | 9 Bytes *nClients | 0 Bytes | 1 |
+| Leaderboard Phase  | Enable Leaderboard | 9 Bytes *nClients | 0 Bytes | 1 |
+| Leaderboard Phase | Update Scores | 54 Bytes *nClients | 0 Bytes | 1 |
+| Leaderboard Phase  | Disable Leaderboard / Setup Restart | 9 Bytes *nClients | 0 Bytes | 1 |
+| Restart | Restart Game | 9 Bytes *nClients | 0 Bytes | 1 |
+| Restart | Reset Network Variables/Lists | 69 Bytes *nClients | 0 Bytes | 1 |
+| End | Client quit a Server | 83 Bytes + 50 Bytes (update host network variables) + ( 3 Bytes * nClients ) | 0 Bytes | 7 |
+
+For the ideal 8 round and 8 player game, where we suppose everyone always votes and takes a photo, changes nickname one time, and consider these values:
+
+- *nClients = 7
+- *n Frames = 960 seconds / (105 updates / 60 frames ) ≈ 550
+- Average message size = 39-137 ≈ 88
+- Average Messages sent = 50
+- Average game time = 16min
+
+We can calculate:
+
+##### Sent Bandwidth Cost
+
+| Event      | Calculations | Total |
+|------------|--------------------|-----|
+| Constant      | ( 5 Bytes × 7 ) × 550 frames + ( 88 Bytes × 7 ) × 50 messages | 50,050 Bytes |
+| Word | ( 5 Bytes × 7 ) + ( 5 Bytes × 7 ) × 11 | 420 Bytes |
+| PhotoTaking | ( 9 Bytes × 7 ) + 15 Bytes × 20 × 8 + ( 9 Bytes × 7 ) | 2,526 Bytes |
+| ShowCase | (  9 Bytes × 7 ) + ( 9 Bytes × 7 ) × 7 + ( 9 Bytes × 7 ) × 7 × 11 + ( 9 Bytes × 7 ) | 5,418 Bytes |
+| Voting | (  9 Bytes × 7 ) + ( 9 Bytes × 7 ) | 126 Bytes |
+| Leaderboard | ( 9 Bytes × 7 ) + ( 54 Bytes × 7 ) + ( 9 Bytes × 7 ) | 504 Bytes |
+
+**One Round Total Data**: 50,050 + 420 + 2,526 + 5,418 + 126 + 504 = **59,044 Bytes**
+**8 Rounds Total Data**: 59,044 * 8 = **472,352 Bytes**
+
+---
+
+Then we add Start, End and Restart events one time:
+
+| Event      | Calculations | Total |
+|------------|--------------------|-----|
+| Start      | 17 + ( 310 Bytes + ( 5 Bytes × 7 ) ) × 7 + ( 100 Bytes × 7 ) × 7 + ( 50 Bytes × 7 ) × 7 + ( 29 Bytes × 7 ) | 9,985 Bytes |
+| Restart | ( 9 Bytes × 7 ) + ( 69 Bytes × 7 ) | 546 Bytes |
+| End | ( 83 Bytes + 50 Bytes + ( 3 Bytes × 7 ) ) × 7 | 1,078 Bytes |
+
+**Total Received Data**: 472,352 + 546 + 9,985 + 1,078 = **483,961 Bytes**
+
+##### Received Bandwidth Cost
+
+| Event      | Calculations | Total |
+|------------|--------------------|-----|
+| Constant      | ( 95 Bytes ) × 50 | 4,750 Bytes |
+| Word | 0 Bytes | No Costs |
+| PhotoTaking | ( 15 Bytes × 7 ) ×  20 × 7 + 15 Bytes × 7 | 14,805 Bytes |
+| ShowCase | 0 Bytes | No Costs |
+| Voting | 16 Bytes × 7 | 112 Bytes |
+| Leaderboard | 9 Bytes × 7 | 63 Bytes |
+
+**One Round Total Data**: 4,750 + 14,805 + 112 + 63 = **19,730 Bytes**
+**8 Rounds Total Data**: 19,730 * 8 = **157,840 Bytes**
+
+---
+
+Then we add Start, End and Restart events one time:
+
+| Event      | Calculations | Total |
+|------------|--------------------|-----|
+| Start      | 178 Bytes × 7 + 64 Bytes × 7 + 28 Bytes × 7 | 1,890 Bytes |
+| Restart | 0 Bytes | No Costs |
+| End | 0 Bytes | No Costs |
+
+**Total Received Data**: 157,840 + 1,890 = **159,730 Bytes**
+
+##### Unity Relay Analysis
+
+- **Total = Sent + Received = 483,961 + 159,730 = 643,691 Bytes ≈ 0.61 MB**
+
+When comparing prices at Unity's price table:
+
 [Unity Relay - Pricing](https://unity.com/products/gaming-services/pricing)
+
+- **Bandwidth** (Relay)
+  - 3 GiB per CCU for free up to a max of 150 GiB / month (combined US/EU/Asia Australia)
+  - $0.09 per GiB US + EU, $0.16 per GiB Asia + Australia
+
+Which means, that on the free plan I could have:
+
+- (3221 MB / 0.61 MB) 5272 full games per month on bandwidth.
+
+So if necessary for commercial distribution of the game, this would match and go beyond the games allowed for the Pro Supabase plan, so it would be fine if we kept the free plan.
 
 ---
 
@@ -559,7 +675,7 @@ So if necessary for commercial distribution of the game, I would get pro, but wo
   Unity Relay->>*Client: Host Left
   *Client->>Unity Relay: Leave
 
-  Note over Host,*Client: On Webchat
+  Note over Host,*Client: On Web Chat
 
   *Client->>Host: New Message
   Host->>*Client: New Message
@@ -573,11 +689,11 @@ events and delegates are very good
 
 ### Acknowledgements
 
-- [@N4taaa](https://github.com/N4taaa?tab=repositories) - Help with building the .bat file, aswell as choosing and setting up Supabase for `UnityWebRequest`.
+- [@N4taaa](https://github.com/N4taaa?tab=repositories) - Help with building the .bat file, as well as choosing and setting up Supabase for `UnityWebRequest`.
 
 ### **Bibliography**
 
-1. [Unity Netcode for GameObjects – NetworkObject Basics](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/)
+1. [Unity Netcode for GameObjects - NetworkObject Basics](https://docs-multiplayer.unity3d.com/netcode/current/basics/networkobject/)
 2. [YouTube: Unity Netcode for GameObjects (Multiplayer Tutorial)](https://www.youtube.com/watch?v=YmUnXsOp_t0)
 3. [Unity Forum: How to Use NetworkList](https://discussions.unity.com/t/how-to-use-networklist/947471/2)
 4. [Unity Forum: Referencing Internal JSON File on Android](https://discussions.unity.com/t/how-to-refer-to-internal-json-file-on-android/222832)
