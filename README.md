@@ -12,7 +12,7 @@
 
 ### Link to Build
 
-<https://drive.google.com/drive/folders/1h_RgIsq1xPjykGQ8UPjZt4rqc_8HsC60?usp=sharing>
+<https://drive.google.com/file/d/1hIbRyaKuxVfqtM7cz8vaujneAgrBdxvK/view?usp=sharing>
 
 ## **Report**
 
