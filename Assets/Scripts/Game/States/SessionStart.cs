@@ -239,7 +239,7 @@ public class SessionStart : NetworkBehaviour
     {
         if ( ! IsServer ) return;
 
-        _startGame.interactable = currentPlayers >= 1; // 1 phones for now, should be 3
+        _startGame.interactable = currentPlayers >= 2; // 1 phones for now, should be 3, will leave 2 for demonstration purposes
     }
 
     public string FindNickname(ulong clientId)
