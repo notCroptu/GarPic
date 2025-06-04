@@ -116,7 +116,7 @@ MonoBehaviour:
   _startOver: {fileID: 0}
   _waiting: {fileID: 0}
   _sessionStart: {fileID: 2741938763769201153}
-  _gameRounds: 1
+  _gameRounds: 8
 --- !u!114 &3566116113246036621
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,7 +241,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   ShowTopMostFoldoutHeaderGroup: 1
   _canvas: {fileID: 0}
-  _leaderBoardTime: 6
+  _leaderBoardTime: 3
   _gameloop: {fileID: 1266433401796896034}
   _sessionStart: {fileID: 2741938763769201153}
   _voting: {fileID: 813900159556525745}
@@ -322,3 +322,7 @@ MonoBehaviour:
   _sessionStart: {fileID: 2741938763769201153}
   _inputField: {fileID: 0}
   _send: {fileID: 0}
+  _slide: {fileID: 0}
+  _chat: {fileID: 0}
+  _notification: {fileID: 0}
+  _scrollRect: {fileID: 0}

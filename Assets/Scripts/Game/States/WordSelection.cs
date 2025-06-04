@@ -52,8 +52,9 @@ public class WordSelection : GameState
     {
         yield return base.State();
 
-        string topic = _topics[Random.Range(0, _topics.Length)];
-        string url = $"https://api.datamuse.com/words?rel_jja={topic}&max=1";
+        // string topic = _topics[Random.Range(0, _topics.Length)];
+        // string url = $"https://api.datamuse.com/words?rel_jja={topic}&max=1";
+        string url = $"https://random-word-api.herokuapp.com/word";
         using UnityWebRequest www = UnityWebRequest.Get(url);
 
         do
@@ -64,9 +65,11 @@ public class WordSelection : GameState
 
         string json = www.downloadHandler.text;
         
-        int start = json.IndexOf("\"word\":\"") + 8;
-        int end = json.IndexOf("\"", start);
-        _word.Value = new FixedString32Bytes( json[start..end]);
+        // int start = json.IndexOf("\"word\":\"") + 8;
+        // int end = json.IndexOf("\"", start);
+        // _word.Value = new FixedString32Bytes( json[start..end]);
+
+        _word.Value = new FixedString32Bytes( json[2..(json.Length-2)]);
 
         Debug.Log("done WordSelection: " + www.downloadHandler.text + " to word: " + Word);
 

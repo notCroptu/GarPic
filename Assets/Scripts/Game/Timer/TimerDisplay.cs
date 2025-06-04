@@ -55,7 +55,15 @@ public class TimerDisplay : NetworkBehaviour
             ulong clientId = playerTimer.OwnerClientId;
 
             if ( _clientToIndex.TryGetValue(clientId, out int i ))
+            {
+                if ( playerTimer.Timer == -1 )
+                {
+                    _timerList[i].text = "";
+                    continue;
+                }
+                
                 _timerList[i].text = playerTimer.Timer.ToString();
+            }
         }
     }
 

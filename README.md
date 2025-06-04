@@ -180,6 +180,8 @@ To integrate this into Unity, more specifically in the `WordSelection` script, I
 
 > **Note:** This might not have been a good API to use later on, as it has a maximum of 100,000 requests per day. (For example, with an average of 8 rounds per session and approximately 80,000 sessions per day (based on Gartic statistics during the pandemic), you could need up to 640,000 requests per day, plus, multiple requests might be needed per round if Word Selection fails.)
 
+The conclusion from this experiment was that datamuse API is deterministic, and therefore I had to fallback to Random Word API again.
+
 ### Data Retrieval
 
 With a list of topics set, I used `UnityWebRequest` to call a custom Datamuse url from a random topic, which was easy to learn as all the code needed was exemplified in the *OLD* official page [official documentation](https://docs.unity3d.com/540/Documentation/Manual/UnityWebRequest).
@@ -632,7 +634,7 @@ sequenceDiagram
 
   Host->>*Client: Start Game
 
-  Host->>DatamuseAPI: Get Random Word
+  Host->>WordAPI: Get Random Word
   Host->>*Client: New Word
   Host->>*Client: Countdown
 
@@ -693,7 +695,7 @@ It was hard debugging `buildInstallLaunch.bat` script and `UnityWebRequest` erro
 
 Netcode was difficult to understand at first, but once I got the core concepts, I was able to apply them consistently throughout the project, and I’m especially grateful that I separated the game phases early on, as this kept me from feeling overwhelmed when applying all `NetworkVariables` and `RPC`s, and let me to take things step by step.
 
-If I were to redo the project, I would rely more on delegates to manage game changes and separate each game phase into a manager and a viewer component for organization, and if I wanted to make a manager component a prefab later, as it happened with `GPSTimer`.
+If I were to redo the project, I would rely more on delegates to manage game changes and separate each game phase into a manager and a viewer component for organization, and if I wanted to make a manager component a prefab later, as it happened with `GPSTimer`, and I would work on better implementations to include the GPS feature into the gameplay, as it didn't end up being very relevant in the end, or switch it out with the phone shake feature to signal movement and stop photo taking timer.
 
 ## Acknowledgements
 

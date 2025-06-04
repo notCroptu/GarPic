@@ -9,6 +9,7 @@ public class GPSTimer : NetworkBehaviour
     private TMP_Text _text;
     private float _runTime;
     private bool _GPSsuccess = false;
+    private string _gpsError = "";
 
     public int Timer => _timer.Value;
     private NetworkVariable<int> _timer = new NetworkVariable<int>(
@@ -33,6 +34,8 @@ public class GPSTimer : NetworkBehaviour
             _text = display.TimeText;
             Debug.Log("text is null? " + _text == null);
         }
+
+        _timer.Value = -1;
     }
 
     private IEnumerator StartGPS()
@@ -48,20 +51,18 @@ public class GPSTimer : NetworkBehaviour
 
         if (!UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.CoarseLocation))
         {
-            _text.text = "Requesting access";
+            _gpsError = "GPS Requesting access";
             UnityEngine.Android.Permission.RequestUserPermission(UnityEngine.Android.Permission.CoarseLocation);
         }
 
         // First, check if user has location service enabled
         if ( ! Input.location.isEnabledByUser )
         {
-            _text.text = "Requesting access NOT ALLOWED";
+            _gpsError = "GPS NOT ALLOWED";
         }
 
         yield return new WaitUntil( () => Input.location.isEnabledByUser &&
             UnityEngine.Android.Permission.HasUserAuthorizedPermission(UnityEngine.Android.Permission.CoarseLocation)); 
-
-        _text.text = "";
         
         #endif
 
@@ -89,12 +90,15 @@ public class GPSTimer : NetworkBehaviour
         // Service didn't initialize in 15 seconds
         if ( maxWait < 1 )
         {
-            Debug.Log("Moving Timed out");
+            _gpsError = "GPS TIMED OUT";
             yield break;
         }
 
         if ( Input.location.status == LocationServiceStatus.Running )
+        {
             _GPSsuccess = true;
+            _gpsError = "GPS ACCESS GRANTED";
+        }
     }
 
     public IEnumerator StartCount()
@@ -122,12 +126,13 @@ public class GPSTimer : NetworkBehaviour
 
             int t2 = Mathf.FloorToInt(_runTime);
             if ( t2 != _timer.Value && t2 >= 0)
+            {
                 _timer.Value = t2;
+            }
 
             Debug.Log("Updating timer:  " +_runTime + " text null? " + _text == null + " _timer? " + _timer.Value );
 
-            if ( _GPSsuccess )
-                yield return waitTillNotMoving;
+            // yield return waitTillNotMoving;
 
             if (_stop)
                 break;
@@ -135,7 +140,7 @@ public class GPSTimer : NetworkBehaviour
             yield return null;
         }
 
-        _timer.Value = 0;
+        _timer.Value = -1;
     }
 
     private bool _stop;
@@ -145,28 +150,47 @@ public class GPSTimer : NetworkBehaviour
         _stop = true;
     }
 
-    private LocationInfo? _lastLocation;
+    private Vector2 _lastLocation;
     private bool IsMoving()
     {
         Debug.Log("Checking for Moving. ");
 
         if ( !_GPSsuccess )
-            return false;
-
-        if ( !_lastLocation.HasValue )
         {
-            _lastLocation = Input.location.lastData;
+            _text.text += "\n" + _gpsError;
             return false;
         }
 
-        bool isEqual = Input.location.lastData.latitude == _lastLocation?.latitude
-            && Input.location.lastData.longitude == _lastLocation?.longitude;
-        _lastLocation = Input.location.lastData;
+        float newLat = Mathf.Round(Input.location.lastData.latitude * 100000f) / 100000f;
+        float newLon = Mathf.Round(Input.location.lastData.longitude * 100000f) / 100000f;
 
-        _text.text += "\n" + Input.location.lastData.longitude.ToString() + " " + Input.location.lastData.latitude.ToString();
+        if ( _lastLocation == null )
+        {
+            _lastLocation = new Vector2()
+            {
+                x = newLat,
+                y = newLon
+            };
+        }
 
-        Debug.Log("Moving? " + ! isEqual );
+        // 1-5 meter accuracy?
 
-        return ! isEqual;
+        bool isMoving = Mathf.Abs(newLat - _lastLocation.x) > 0.00001f
+                    || Mathf.Abs(newLon - _lastLocation.y) > 0.00001f;
+
+        _text.text += "\n" + "n: " + newLat + " " + newLon + "\n" +
+                "o: " + _lastLocation.x + " " + _lastLocation.y +  "\n" +
+                " Moved? " + isMoving;
+
+        Debug.Log( "n: " + newLat + " " + newLon + "\n" +
+                "0: " + _lastLocation.x + " " + _lastLocation.y +  "\n" +
+                " Moved? " + isMoving);
+
+        _lastLocation.x = newLat;
+        _lastLocation.y = newLon;
+
+        Debug.Log("Moving? " + ! isMoving );
+
+        return isMoving;
     }
 }
